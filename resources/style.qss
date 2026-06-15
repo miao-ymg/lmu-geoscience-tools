@@ -1,0 +1,74 @@
+/*
+=== THEME VARIABLES ===
+@bg-base: #1a1f1a;
+@bg-mantle: #141914;
+@bg-hover: #2a332a;
+@text-main: #d4e8d4;
+@text-dim: #8aab8a;
+@accent: #5a9e5a;
+@border: #2a332a;
+=======================
+*/
+
+/* Main Background */
+QMainWindow {
+    background-color: @bg-base;
+}
+
+/* Navbar container */
+QWidget#Navbar {
+    background-color: @bg-mantle;
+    border-right: 1px solid @border;
+}
+
+/* Content area */
+QStackedWidget#ContentArea {
+    background-color: @bg-base;
+}
+
+/* App Title */
+QLabel#AppTitle {
+    color: @text-main;
+    padding: 20px 10px 20px 10px;
+    border-bottom: 1px solid @border;
+}
+
+/* Feature Content Title */
+QLabel#FeatureTitle {
+    color: @text-main;
+    padding: 30px;
+}
+
+/* Sidebar Tree Widget */
+QTreeWidget {
+    background-color: @bg-mantle;
+    color: @text-dim;
+    border: none;
+    font-size: 14px;
+    outline: none; /* remove focus dotted border */
+    show-decoration-selected: 0;
+}
+
+QTreeWidget::item {
+    padding: 8px;
+    border-radius: 6px;
+    margin: 2px 10px 2px 10px;
+}
+
+QTreeWidget::item:hover {
+    background-color: @bg-hover;
+    color: @text-main;
+}
+
+QTreeWidget::item:selected {
+    background-color: @accent;
+    color: @bg-base;
+}
+
+QTreeWidget::branch {
+    background-color: transparent;
+}
+
+QTreeWidget::branch:selected {
+    background-color: transparent;
+}
