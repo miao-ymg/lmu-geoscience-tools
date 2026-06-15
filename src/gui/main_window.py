@@ -2,6 +2,8 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
                              QLabel, QTreeWidget, QTreeWidgetItem, QStackedWidget)
 from PyQt6.QtCore import Qt
 
+from tools.ternary_diagrams.qapf.widget import QapfWidget
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -83,8 +85,13 @@ class MainWindow(QMainWindow):
                 content_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
                 content_layout.addWidget(content_label)
                 
-                # Add stretch to push content to top
-                content_layout.addStretch()
+                # Add the actual tool widget
+                if sub_name == "QAPF":
+                    tool_widget = QapfWidget()
+                    content_layout.addWidget(tool_widget, stretch=1)
+                else:
+                    # Add stretch to push content to top for unfinished tools
+                    content_layout.addStretch()
                 
                 self.content_area.addWidget(content_widget)
                 

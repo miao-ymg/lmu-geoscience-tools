@@ -10,9 +10,13 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "PyQt6>=6.4.0",
+    "pandas>=2.0.0",
+    "openpyxl>=3.1.0",
+    "matplotlib>=3.7.0"
 ]
 
 [project.optional-dependencies]
 dev = [
     "pyinstaller>=6.0.0",
+    "pytest>=7.0.0"
 ]

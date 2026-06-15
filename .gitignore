@@ -23,3 +23,11 @@ venv.bak/
 *.swp
 *.swo
 .DS_Store
+
+# Data
+data/*
+!data/examples/
+
+# Tests
+.pytest_cache/
+temp_test.csv
