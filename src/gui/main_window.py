@@ -1,8 +1,21 @@
+import threading
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
                              QLabel, QTreeWidget, QTreeWidgetItem, QStackedWidget)
 from PyQt6.QtCore import Qt
 
-from tools.ternary_diagrams.qapf.widget import QapfWidget
+class LazyWidget(QWidget):
+    def __init__(self, loader_fn):
+        super().__init__()
+        self.loader_fn = loader_fn
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.widget = None
+        
+    def load_widget(self):
+        if self.widget is None:
+            self.widget = self.loader_fn()
+            self.layout.addWidget(self.widget)
+        return self.widget
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -47,6 +60,8 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(navbar_widget)
         main_layout.addWidget(self.content_area)
 
+        self.setup_home_dashboard()
+
         # --- TOOLS ARE HERE ---
         self.features = {
             "Ternary Diagrams": {
@@ -59,6 +74,55 @@ class MainWindow(QMainWindow):
 
         # Connect click event
         self.feature_tree.itemClicked.connect(self.on_feature_clicked)
+        
+        # Start background preloading
+        threading.Thread(target=self.warmup_imports, daemon=True).start()
+
+    def warmup_imports(self):
+        """Silently imports heavy libraries in the background so the GUI doesn't freeze when clicked."""
+        try:
+            import pandas
+            import matplotlib.pyplot
+            from tools.ternary_diagrams.qapf.widget import QapfWidget
+        except Exception:
+            pass
+
+    def setup_home_dashboard(self):
+        home_widget = QWidget()
+        home_layout = QVBoxLayout(home_widget)
+        home_layout.setContentsMargins(50, 50, 50, 50)
+        
+        # Dashboard Title
+        welcome_label = QLabel("Welcome to LMU Geoscience Tools")
+        welcome_label.setObjectName("DashboardTitle")
+        font = welcome_label.font()
+        font.setPointSize(36)
+        font.setBold(True)
+        welcome_label.setFont(font)
+        welcome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        home_layout.addWidget(welcome_label)
+        
+        # Subtitle
+        subtitle_label = QLabel("Select a tool from the sidebar to get started.")
+        subtitle_label.setObjectName("DashboardSubtitle")
+        font = subtitle_label.font()
+        font.setPointSize(18)
+        subtitle_label.setFont(font)
+        subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        home_layout.addWidget(subtitle_label)
+        
+        home_layout.addStretch()
+        
+        # Add Home item to the tree
+        home_item = QTreeWidgetItem(self.feature_tree)
+        home_item.setText(0, "Home")
+        
+        self.content_area.addWidget(home_widget)
+        home_item.setData(0, Qt.ItemDataRole.UserRole, self.content_area.count() - 1)
+        
+        # Select Home by default
+        self.feature_tree.setCurrentItem(home_item)
+        self.content_area.setCurrentIndex(0)
 
     def setup_features(self):
         for group_name, sub_features in self.features.items():
@@ -87,7 +151,10 @@ class MainWindow(QMainWindow):
                 
                 # Add the actual tool widget
                 if sub_name == "QAPF":
-                    tool_widget = QapfWidget()
+                    def get_qapf():
+                        from tools.ternary_diagrams.qapf.widget import QapfWidget
+                        return QapfWidget()
+                    tool_widget = LazyWidget(get_qapf)
                     content_layout.addWidget(tool_widget, stretch=1)
                 else:
                     # Add stretch to push content to top for unfinished tools
@@ -102,6 +169,10 @@ class MainWindow(QMainWindow):
         # Only switch content if it's a sub-feature (has UserRole data)
         index = item.data(0, Qt.ItemDataRole.UserRole)
         if index is not None:
+            widget = self.content_area.widget(index)
+            # Find and load any LazyWidget inside this view
+            for child in widget.findChildren(LazyWidget):
+                child.load_widget()
             self.content_area.setCurrentIndex(index)
 
     def keyPressEvent(self, event):

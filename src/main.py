@@ -1,6 +1,7 @@
 import sys
 import os
 import re
+import subprocess
 from PyQt6.QtWidgets import QApplication
 from gui.main_window import MainWindow
 
@@ -33,6 +34,15 @@ def load_stylesheet(style_path):
         return ""
 
 def main():
+    # Remove macOS quarantine flags from bundled dynamic libraries to prevent 30s Gatekeeper freezes
+    if sys.platform == 'darwin' and getattr(sys, 'frozen', False):
+        try:
+            app_path = os.path.dirname(os.path.dirname(os.path.dirname(sys.executable)))
+            if app_path.endswith('.app'):
+                subprocess.run(['xattr', '-rc', app_path], capture_output=True)
+        except Exception:
+            pass
+
     app = QApplication(sys.argv)
     
     # Load and apply QSS stylesheet

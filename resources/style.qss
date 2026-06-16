@@ -72,3 +72,12 @@ QTreeWidget::branch {
 QTreeWidget::branch:selected {
     background-color: transparent;
 }
+
+/* Home Dashboard */
+QLabel#DashboardTitle {
+    color: @accent;
+}
+
+QLabel#DashboardSubtitle {
+    color: @text-dim;
+}

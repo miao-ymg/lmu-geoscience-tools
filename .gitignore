@@ -1,33 +1,43 @@
-# Byte-compiled / optimized / DLL files
+# === Python ===
 __pycache__/
 *.py[cod]
 *$py.class
 
-# PyInstaller
-build/
-dist/
-*.spec
-
-# Environments
+# === Virtual environments ===
 .env
 .venv
 env/
 venv/
 ENV/
-env.bak/
-venv.bak/
 
-# IDEs / OS
+# === Build artifacts ===
+build/
+dist/
+
+# === PyInstaller output ===
+# The whole directory created during packaging
+*.dmg
+*.app
+*.exe
+*.zip
+
+# === IDEs / OS ===
 .idea/
 .vscode/
 *.swp
 *.swo
 .DS_Store
 
-# Data
-data/*
-!data/examples/
+# === Data ===
+# User generated data files that should not be tracked
+data/
 
-# Tests
+# === Resources (large images) ===
+resources/**/*.png
+
+# === Test artifacts ===
 .pytest_cache/
-temp_test.csv
+
+# === Logs ===
+.github/workflows/*.log
+generate_examples.py
