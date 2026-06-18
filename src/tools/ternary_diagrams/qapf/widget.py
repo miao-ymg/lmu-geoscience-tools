@@ -125,42 +125,12 @@ class PlotView(QWidget):
         highlight_label.setStyleSheet("color: #e0e0e0; font-weight: bold; font-size: 14px; margin-bottom: 5px;")
         highlight_layout.addWidget(highlight_label)
         
-        buttons_layout = QHBoxLayout()
+        self.buttons_layout = QHBoxLayout()
         self.highlight_group = QButtonGroup(self)
         
-        for val in ['None', 'Q', 'A', 'P', 'F']:
-            btn = QPushButton(val)
-            btn.setCheckable(True)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #333333;
-                    color: #e0e0e0;
-                    border-radius: 5px;
-                    padding: 8px 15px;
-                    font-size: 14px;
-                    font-weight: bold;
-                    border: none;
-                }
-                QPushButton:checked {
-                    background-color: #a6e3a1;
-                    color: #1e1e1e;
-                }
-                QPushButton:hover:!checked {
-                    background-color: #444444;
-                }
-            """)
-            if val == 'None':
-                btn.setChecked(True)
-            self.highlight_group.addButton(btn)
-            buttons_layout.addWidget(btn)
-            
-        buttons_layout.addStretch()
-        highlight_layout.addLayout(buttons_layout)
-        
+        self.buttons_layout.addStretch()
+        highlight_layout.addLayout(self.buttons_layout)
         self.layout.addLayout(highlight_layout)
-        
-        self.highlight_group.buttonClicked.connect(lambda btn: on_highlight_changed(btn.text()))
         
         self.canvas_layout = QVBoxLayout()
         self.layout.addLayout(self.canvas_layout, stretch=1)
@@ -206,6 +176,61 @@ class PlotView(QWidget):
         self.current_fig = None
         self.canvas = None
         
+        self.update_highlight_options('QAPF', on_highlight_changed)
+        
+    def update_highlight_options(self, mode, on_highlight_changed=None):
+        # Remove old buttons
+        for btn in self.highlight_group.buttons():
+            self.highlight_group.removeButton(btn)
+            self.buttons_layout.removeWidget(btn)
+            btn.deleteLater()
+            
+        options = ['None', 'A', 'P']
+        if mode in ['QAPF', 'QAP']:
+            options.insert(1, 'Q')
+        if mode in ['QAPF', 'APF']:
+            options.append('F')
+            
+        for val in options:
+            btn = QPushButton(val)
+            btn.setCheckable(True)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #333333;
+                    color: #e0e0e0;
+                    border-radius: 5px;
+                    padding: 8px 15px;
+                    font-size: 14px;
+                    font-weight: bold;
+                    border: none;
+                }
+                QPushButton:checked {
+                    background-color: #a6e3a1;
+                    color: #1e1e1e;
+                }
+                QPushButton:hover:!checked {
+                    background-color: #444444;
+                }
+            """)
+            if val == 'None':
+                btn.setChecked(True)
+            self.highlight_group.addButton(btn)
+            # Insert before the stretch
+            count = self.buttons_layout.count()
+            if count > 0 and self.buttons_layout.itemAt(count - 1).spacerItem():
+                self.buttons_layout.insertWidget(count - 1, btn)
+            else:
+                self.buttons_layout.addWidget(btn)
+                
+        if on_highlight_changed:
+            # Reconnect signal, ignore old connections if any
+            try:
+                self.highlight_group.buttonClicked.disconnect()
+            except TypeError:
+                pass
+            self.highlight_group.buttonClicked.connect(lambda btn: on_highlight_changed(btn.text()))
+
     def set_plot(self, fig):
         self.current_fig = fig
         for i in reversed(range(self.canvas_layout.count())): 
@@ -236,6 +261,7 @@ class QapfWidget(QWidget):
         self.current_file_path = None
         self.normalized_df = None
         self.current_highlight = 'None'
+        self.current_mode = 'QAPF'
         
     def show_upload(self):
         self.upload_view.reset()
@@ -252,13 +278,16 @@ class QapfWidget(QWidget):
         if not self.current_file_path:
             return
             
-        df, error = load_and_validate_data(self.current_file_path)
+        df, mode, error = load_and_validate_data(self.current_file_path)
         
         if error:
             QMessageBox.warning(self, "Data Error", error)
             return
             
         try:
+            self.current_mode = mode
+            self.current_highlight = 'None'
+            self.plot_view.update_highlight_options(mode, self.on_highlight_changed)
             self.normalized_df = normalize_qapf(df)
             self.refresh_plot()
             self.stack.setCurrentIndex(1)
@@ -269,7 +298,7 @@ class QapfWidget(QWidget):
         if self.normalized_df is None:
             return
         try:
-            fig = plot_qapf(self.normalized_df, dark_mode=True, highlight_axis=self.current_highlight)
+            fig = plot_qapf(self.normalized_df, mode=self.current_mode, dark_mode=True, highlight_axis=self.current_highlight)
             self.plot_view.set_plot(fig)
         except Exception as e:
             QMessageBox.critical(self, "Plotting Error", f"An error occurred while regenerating the plot: {str(e)}")
@@ -293,7 +322,7 @@ class QapfWidget(QWidget):
         if file_path:
             try:
                 # Generate light-theme plot for saving
-                fig_to_save = plot_qapf(self.normalized_df, dark_mode=False, highlight_axis=self.current_highlight)
+                fig_to_save = plot_qapf(self.normalized_df, mode=self.current_mode, dark_mode=False, highlight_axis=self.current_highlight)
                 fig_to_save.savefig(file_path, dpi=300, bbox_inches='tight')
                 QMessageBox.information(self, "Success", "Plot successfully saved!")
             except Exception as e:

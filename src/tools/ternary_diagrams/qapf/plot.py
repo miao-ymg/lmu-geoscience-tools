@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def draw_grid(ax, default_color, default_alpha, accent_color, highlight_axis=None):
+def draw_grid(ax, default_color, default_alpha, accent_color, highlight_axis=None, mode='QAPF'):
     sqrt3_2 = np.sqrt(3) / 2
     for v in range(10, 100, 10):
         # By default, use neutral grey
@@ -31,22 +31,34 @@ def draw_grid(ax, default_color, default_alpha, accent_color, highlight_axis=Non
             f_alpha = highlight_alpha
 
         # QAP lines
-        # Horizontal (constant Q)
-        ax.plot([-(100-v)/2, (100-v)/2], [v*sqrt3_2, v*sqrt3_2], color=q_color, alpha=q_alpha, lw=lw, zorder=1)
-        # Constant A
-        ax.plot([-v/2, 50 - v], [(100-v)*sqrt3_2, 0], color=a_color, alpha=a_alpha, lw=lw, zorder=1)
-        # Constant P
-        ax.plot([v/2, v - 50], [(100-v)*sqrt3_2, 0], color=p_color, alpha=p_alpha, lw=lw, zorder=1)
+        if mode in ['QAPF', 'QAP']:
+            # Horizontal (constant Q)
+            ax.plot([-(100-v)/2, (100-v)/2], [v*sqrt3_2, v*sqrt3_2], color=q_color, alpha=q_alpha, lw=lw, zorder=1)
+            # Constant A
+            ax.plot([-v/2, 50 - v], [(100-v)*sqrt3_2, 0], color=a_color, alpha=a_alpha, lw=lw, zorder=1)
+            # Constant P
+            ax.plot([v/2, v - 50], [(100-v)*sqrt3_2, 0], color=p_color, alpha=p_alpha, lw=lw, zorder=1)
         
         # APF lines
-        # Horizontal (constant F)
-        ax.plot([-(100-v)/2, (100-v)/2], [-v*sqrt3_2, -v*sqrt3_2], color=f_color, alpha=f_alpha, lw=lw, zorder=1)
-        # Constant A
-        ax.plot([-v/2, 50 - v], [-(100-v)*sqrt3_2, 0], color=a_color, alpha=a_alpha, lw=lw, zorder=1)
-        # Constant P
-        ax.plot([v/2, v - 50], [-(100-v)*sqrt3_2, 0], color=p_color, alpha=p_alpha, lw=lw, zorder=1)
+        if mode in ['QAPF', 'APF']:
+            if mode == 'APF':
+                # F points UP. Exact same geometry as QAP!
+                # Horizontal (constant F)
+                ax.plot([-(100-v)/2, (100-v)/2], [v*sqrt3_2, v*sqrt3_2], color=f_color, alpha=f_alpha, lw=lw, zorder=1)
+                # Constant A
+                ax.plot([-v/2, 50 - v], [(100-v)*sqrt3_2, 0], color=a_color, alpha=a_alpha, lw=lw, zorder=1)
+                # Constant P
+                ax.plot([v/2, v - 50], [(100-v)*sqrt3_2, 0], color=p_color, alpha=p_alpha, lw=lw, zorder=1)
+            else:
+                # F points DOWN (QAPF mode)
+                # Horizontal (constant F)
+                ax.plot([-(100-v)/2, (100-v)/2], [-v*sqrt3_2, -v*sqrt3_2], color=f_color, alpha=f_alpha, lw=lw, zorder=1)
+                # Constant A
+                ax.plot([-v/2, 50 - v], [-(100-v)*sqrt3_2, 0], color=a_color, alpha=a_alpha, lw=lw, zorder=1)
+                # Constant P
+                ax.plot([v/2, v - 50], [-(100-v)*sqrt3_2, 0], color=p_color, alpha=p_alpha, lw=lw, zorder=1)
 
-def plot_qapf(normalized_df, dark_mode=False, highlight_axis=None):
+def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None):
     """
     Plots a QAPF diagram.
     Returns a matplotlib Figure object.
@@ -83,33 +95,40 @@ def plot_qapf(normalized_df, dark_mode=False, highlight_axis=None):
     P = (50, 0)
     F = (0, -100 * sqrt3_2)
     
+    if mode == 'APF':
+        F = (0, 100 * sqrt3_2)
+    
     # Draw internal grid lines
     draw_grid(ax, default_color=grid_color, default_alpha=grid_alpha, 
-              accent_color=accent_color, highlight_axis=highlight_axis)
+              accent_color=accent_color, highlight_axis=highlight_axis, mode=mode)
     
     # Draw the outline of the two triangles
-    # Q-A-P-Q
-    ax.plot([Q[0], A[0], P[0], Q[0]], [Q[1], A[1], P[1], Q[1]], color=line_color, lw=1.5, zorder=2)
-    # A-F-P-A
-    ax.plot([A[0], F[0], P[0], A[0]], [A[1], F[1], P[1], A[1]], color=line_color, lw=1.5, zorder=2)
+    if mode in ['QAPF', 'QAP']:
+        # Q-A-P-Q
+        ax.plot([Q[0], A[0], P[0], Q[0]], [Q[1], A[1], P[1], Q[1]], color=line_color, lw=1.5, zorder=2)
+    if mode in ['QAPF', 'APF']:
+        # A-F-P-A
+        ax.plot([A[0], F[0], P[0], A[0]], [A[1], F[1], P[1], A[1]], color=line_color, lw=1.5, zorder=2)
     
     # Plot points
     x_coords = []
     y_coords = []
     
     for _, row in normalized_df.iterrows():
-        a = row.get('A', 0)
-        p = row.get('P', 0)
-        
-        # X is based on P - A difference
-        x = (p - a) / 2
+        p_ratio = row.get('P_ratio', 0.5)
         
         if row['type'] == 'QAP':
             q = row.get('Q', 0)
             y = q * sqrt3_2
+            x = (100 - q) * (p_ratio - 0.5)
         else:
             f = row.get('F', 0)
-            y = -f * sqrt3_2
+            if mode == 'APF':
+                y = f * sqrt3_2
+                x = (100 - f) * (p_ratio - 0.5)
+            else:
+                y = -f * sqrt3_2
+                x = (100 - f) * (p_ratio - 0.5)
             
         x_coords.append(x)
         y_coords.append(y)
@@ -117,14 +136,22 @@ def plot_qapf(normalized_df, dark_mode=False, highlight_axis=None):
     ax.scatter(x_coords, y_coords, color=point_color, s=50, edgecolors=edge_color, zorder=5)
     
     # Add text labels at the corners
-    ax.text(Q[0], Q[1] + 5, "Q", fontsize=14, ha='center', fontweight='bold', color=text_color)
+    if mode in ['QAPF', 'QAP']:
+        ax.text(Q[0], Q[1] + 5, "Q", fontsize=14, ha='center', fontweight='bold', color=text_color)
     ax.text(A[0] - 5, A[1], "A", fontsize=14, ha='right', va='center', fontweight='bold', color=text_color)
     ax.text(P[0] + 5, P[1], "P", fontsize=14, ha='left', va='center', fontweight='bold', color=text_color)
-    ax.text(F[0], F[1] - 5, "F", fontsize=14, ha='center', va='top', fontweight='bold', color=text_color)
+    if mode in ['QAPF', 'APF']:
+        if mode == 'APF':
+            ax.text(F[0], F[1] + 5, "F", fontsize=14, ha='center', va='bottom', fontweight='bold', color=text_color)
+        else:
+            ax.text(F[0], F[1] - 5, "F", fontsize=14, ha='center', va='top', fontweight='bold', color=text_color)
     
     # Make sure we can see the labels
     ax.set_xlim(-70, 70)
-    ax.set_ylim(-110 * sqrt3_2, 110 * sqrt3_2)
+    if mode == 'QAP' or mode == 'APF':
+        ax.set_ylim(-10 * sqrt3_2, 110 * sqrt3_2)
+    else:
+        ax.set_ylim(-110 * sqrt3_2, 110 * sqrt3_2)
     
     ax.set_aspect('equal')
     ax.axis('off')  # Hide grid and axes
