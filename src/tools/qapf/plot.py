@@ -80,7 +80,7 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
         text_color = '#e0e0e0'
         grid_color = '#333333'
         grid_alpha = 1.0
-        point_color = '#ff4d4d' 
+        point_color = 'orange' 
         edge_color = '#1e1e1e'
         accent_color = '#a6e3a1' # Green
     else:
@@ -89,7 +89,7 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
         text_color = 'black'
         grid_color = '#dddddd'
         grid_alpha = 1.0
-        point_color = '#ff4d4d'
+        point_color = 'orange'
         edge_color = 'black'
         accent_color = '#40a02b' # Darker green for light mode visibility
 
@@ -201,7 +201,7 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
         x_coords.append(x)
         y_coords.append(y)
         
-    ax.scatter(x_coords, y_coords, color=point_color, s=50, edgecolors=edge_color, zorder=5)
+    ax.scatter(x_coords, y_coords, color=point_color, s=100, edgecolors=edge_color, zorder=5, marker='o')
     
     # Add text labels at the corners
     if mode in ['QAPF', 'QAP']:

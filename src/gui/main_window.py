@@ -64,7 +64,8 @@ class MainWindow(QMainWindow):
 
         # --- TOOLS ARE HERE ---
         self.features = {
-            "QAPF Diagrams": "QAPF Diagrams"
+            "QAPF Diagrams": "QAPF Diagrams",
+            "TAS Diagrams": "TAS Diagrams"
         }
 
         self.setup_features()
@@ -80,7 +81,8 @@ class MainWindow(QMainWindow):
         try:
             import pandas
             import matplotlib.pyplot
-            from tools.ternary_diagrams.qapf.widget import QapfWidget
+            from tools.qapf.widget import QapfWidget
+            from tools.tas.widget import TasWidget
         except Exception:
             pass
 
@@ -146,9 +148,15 @@ class MainWindow(QMainWindow):
             # Add the actual tool widget
             if tool_name == "QAPF Diagrams":
                 def get_qapf():
-                    from tools.ternary_diagrams.qapf.widget import QapfWidget
+                    from tools.qapf.widget import QapfWidget
                     return QapfWidget()
                 tool_widget = LazyWidget(get_qapf)
+                content_layout.addWidget(tool_widget, stretch=1)
+            elif tool_name == "TAS Diagrams":
+                def get_tas():
+                    from tools.tas.widget import TasWidget
+                    return TasWidget()
+                tool_widget = LazyWidget(get_tas)
                 content_layout.addWidget(tool_widget, stretch=1)
             else:
                 # Add stretch to push content to top for unfinished tools

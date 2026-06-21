@@ -1,14 +1,20 @@
 # -*- mode: python ; coding: utf-8 -*-
 import sys
+from PyInstaller.utils.hooks import collect_data_files
 
 block_cipher = None
+
+pyrolite_datas = collect_data_files('pyrolite')
 
 a = Analysis(
     ['src/main.py'],
     pathex=[],
     binaries=[],
-    datas=[('resources/style.qss', 'resources')],
-    hiddenimports=[],
+    datas=[
+        ('resources/style.qss', 'resources'),
+        ('src/tools/qapf/*.yml', 'tools/qapf')
+    ] + pyrolite_datas,
+    hiddenimports=['pyrolite', 'pyrolite.plot', 'pyrolite.plot.templates'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
