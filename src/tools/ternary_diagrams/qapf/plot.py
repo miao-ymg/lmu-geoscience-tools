@@ -1,5 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+import yaml
+import matplotlib.patches as patches
+
+def get_classifications():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    yaml_path = os.path.join(current_dir, 'classifications.yml')
+    if os.path.exists(yaml_path):
+        with open(yaml_path, 'r') as f:
+            return yaml.safe_load(f)
+    return {}
 
 def draw_grid(ax, default_color, default_alpha, accent_color, highlight_axis=None, mode='QAPF'):
     sqrt3_2 = np.sqrt(3) / 2
@@ -58,7 +69,7 @@ def draw_grid(ax, default_color, default_alpha, accent_color, highlight_axis=Non
                 # Constant P
                 ax.plot([v/2, v - 50], [-(100-v)*sqrt3_2, 0], color=p_color, alpha=p_alpha, lw=lw, zorder=1)
 
-def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None):
+def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, classification=None):
     """
     Plots a QAPF diagram.
     Returns a matplotlib Figure object.
@@ -82,9 +93,16 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None):
         edge_color = 'black'
         accent_color = '#40a02b' # Darker green for light mode visibility
 
-    fig = plt.figure(figsize=(8, 8), facecolor=bg_color)
-    # Explicitly position the main axes so its size NEVER changes
-    ax = fig.add_axes([0.1, 0.20, 0.8, 0.75])
+    # Increase width to make room for legend if classification is present
+    fig_width = 11 if classification and classification != 'None' else 8
+    fig = plt.figure(figsize=(fig_width, 8), facecolor=bg_color)
+    
+    if classification and classification != 'None':
+        # Leave room on the right for legend
+        ax = fig.add_axes([0.05, 0.20, 0.55, 0.75])
+    else:
+        ax = fig.add_axes([0.1, 0.20, 0.8, 0.75])
+        
     ax.set_facecolor(bg_color)
     
     sqrt3_2 = np.sqrt(3) / 2
@@ -97,6 +115,56 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None):
     
     if mode == 'APF':
         F = (0, 100 * sqrt3_2)
+    
+    # Draw classification polygons
+    if classification and classification != 'None':
+        all_classifications = get_classifications()
+        if classification in all_classifications:
+            class_dict = all_classifications[classification]
+            
+            # Get a colormap for the classes
+            try:
+                cmap = plt.colormaps.get_cmap('tab20')
+            except AttributeError:
+                import matplotlib.cm as cm
+                cmap = cm.get_cmap('tab20')
+                
+            colors = [cmap(i % 20) for i in range(len(class_dict))]
+            legend_handles = []
+            
+            for (name, data), color in zip(class_dict.items(), colors):
+                c_type = 'QAP' if 'Q' in data else 'APF'
+                if mode == 'QAP' and c_type != 'QAP': continue
+                if mode == 'APF' and c_type != 'APF': continue
+                
+                p_min, p_max = data.get('P_ratio', [0, 100])
+                p_min /= 100.0
+                p_max /= 100.0
+                
+                if c_type == 'QAP':
+                    q_min, q_max = data.get('Q', [0, 100])
+                    v1 = ((100 - q_min) * (p_min - 0.5), q_min * sqrt3_2)
+                    v2 = ((100 - q_min) * (p_max - 0.5), q_min * sqrt3_2)
+                    v3 = ((100 - q_max) * (p_max - 0.5), q_max * sqrt3_2)
+                    v4 = ((100 - q_max) * (p_min - 0.5), q_max * sqrt3_2)
+                else:
+                    f_min, f_max = data.get('F', [0, 100])
+                    y_sign = 1 if mode == 'APF' else -1
+                    v1 = ((100 - f_min) * (p_min - 0.5), y_sign * f_min * sqrt3_2)
+                    v2 = ((100 - f_min) * (p_max - 0.5), y_sign * f_min * sqrt3_2)
+                    v3 = ((100 - f_max) * (p_max - 0.5), y_sign * f_max * sqrt3_2)
+                    v4 = ((100 - f_max) * (p_min - 0.5), y_sign * f_max * sqrt3_2)
+                    
+                poly = patches.Polygon([v1, v2, v3, v4], facecolor=color, edgecolor=line_color, alpha=0.4, zorder=0)
+                ax.add_patch(poly)
+                
+                patch = patches.Patch(color=color, alpha=0.4, label=name)
+                legend_handles.append(patch)
+            
+            if legend_handles:
+                # Draw legend outside the axes
+                fig.legend(handles=legend_handles, loc='center left', bbox_to_anchor=(0.60, 0.5), 
+                           frameon=False, fontsize=10, labelcolor=text_color)
     
     # Draw internal grid lines
     draw_grid(ax, default_color=grid_color, default_alpha=grid_alpha, 
@@ -168,7 +236,10 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None):
     
     if highlight_axis in ['Q', 'A', 'P', 'F']:
         # Explicitly position the colorbar axes at the bottom so it never steals space from main ax
-        cbar_ax = fig.add_axes([0.15, 0.08, 0.7, 0.03])
+        # Move it more to the left if classification is enabled to keep it under the triangle
+        cbar_x = 0.05 if classification and classification != 'None' else 0.15
+        cbar_width = 0.55 if classification and classification != 'None' else 0.7
+        cbar_ax = fig.add_axes([cbar_x, 0.08, cbar_width, 0.03])
         cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
         cbar.set_label(f'{highlight_axis} Axis Highlight (%)', color=text_color, fontweight='bold', labelpad=5)
         cbar.ax.xaxis.set_tick_params(color=text_color, labelcolor=text_color)

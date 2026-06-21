@@ -1,0 +1,150 @@
+Volcanites:
+  "Quartz-rich Volcanic Rock":
+    Q: [60, 90]
+    P_ratio: [0, 100]
+  "Alkali Feldspar Rhyolite":
+    Q: [20, 60]
+    P_ratio: [0, 10]
+  "Rhyolite":
+    Q: [20, 60]
+    P_ratio: [10, 65]
+  "Dacite":
+    Q: [20, 60]
+    P_ratio: [65, 100]
+  "Quartz Alkali Feldspar Trachyte":
+    Q: [5, 20]
+    P_ratio: [0, 10]
+  "Quartz Trachyte":
+    Q: [5, 20]
+    P_ratio: [10, 35]
+  "Quartz Latite":
+    Q: [5, 20]
+    P_ratio: [35, 65]
+  "Quartz Basaltic Andesite":
+    Q: [5, 20]
+    P_ratio: [65, 100]
+  "Alkali Feldspar Trachyte":
+    Q: [0, 5]
+    P_ratio: [0, 10]
+  "Trachyte":
+    Q: [0, 5]
+    P_ratio: [10, 35]
+  "Latite":
+    Q: [0, 5]
+    P_ratio: [35, 65]
+  "Basaltic Andesite":
+    Q: [0, 5]
+    P_ratio: [65, 100]
+  "Foid-bearing Alkali Feldspar Trachyte":
+    F: [0, 10]
+    P_ratio: [0, 10]
+  "Foid-bearing Trachyte":
+    F: [0, 10]
+    P_ratio: [10, 35]
+  "Foid-bearing Latite":
+    F: [0, 10]
+    P_ratio: [35, 65]
+  "Foid-bearing Basaltic Andesite":
+    F: [0, 10]
+    P_ratio: [65, 100]
+  "Phonolite":
+    F: [10, 60]
+    P_ratio: [0, 10]
+  "Tephritic Phonolite":
+    F: [10, 60]
+    P_ratio: [10, 50]
+  "Phonolitic Tephrite":
+    F: [10, 60]
+    P_ratio: [50, 90]
+  "Tephrite/Basanite":
+    F: [10, 60]
+    P_ratio: [90, 100]
+  "Phonolitic Foidite":
+    F: [60, 90]
+    P_ratio: [0, 50]
+  "Tephritic Foidite":
+    F: [60, 90]
+    P_ratio: [50, 100]
+  "Foidite":
+    F: [90, 100]
+    P_ratio: [0, 100]
+
+Plutonites:
+  "Quartzolite":
+    Q: [90, 100]
+    P_ratio: [0, 100]
+  "Quartz-rich Granitoid":
+    Q: [60, 90]
+    P_ratio: [0, 100]
+  "Alkali Feldspar Granite":
+    Q: [20, 60]
+    P_ratio: [0, 10]
+  "Granite":
+    Q: [20, 60]
+    P_ratio: [10, 65]
+  "Granodiorite":
+    Q: [20, 60]
+    P_ratio: [65, 90]
+  "Tonalite":
+    Q: [20, 60]
+    P_ratio: [90, 100]
+  "Quartz Alkali Feldspar Syenite":
+    Q: [5, 20]
+    P_ratio: [0, 10]
+  "Quartz Syenite":
+    Q: [5, 20]
+    P_ratio: [10, 35]
+  "Quartz Monzonite":
+    Q: [5, 20]
+    P_ratio: [35, 65]
+  "Quartz Monzodiorite":
+    Q: [5, 20]
+    P_ratio: [65, 90]
+  "Quartz Diorite/Gabbro":
+    Q: [5, 20]
+    P_ratio: [90, 100]
+  "Alkali Feldspar Syenite":
+    Q: [0, 5]
+    P_ratio: [0, 10]
+  "Syenite":
+    Q: [0, 5]
+    P_ratio: [10, 35]
+  "Monzonite":
+    Q: [0, 5]
+    P_ratio: [35, 65]
+  "Monzodiorite":
+    Q: [0, 5]
+    P_ratio: [65, 90]
+  "Diorite/Gabbro/Anorthosite":
+    Q: [0, 5]
+    P_ratio: [90, 100]
+  "Foid-bearing Alkali Feldspar Syenite":
+    F: [0, 10]
+    P_ratio: [0, 10]
+  "Foid-bearing Syenite":
+    F: [0, 10]
+    P_ratio: [10, 35]
+  "Foid-bearing Monzonite":
+    F: [0, 10]
+    P_ratio: [35, 65]
+  "Foid-bearing Monzodiorite":
+    F: [0, 10]
+    P_ratio: [65, 90]
+  "Foid-bearing Diorite/Gabbro":
+    F: [0, 10]
+    P_ratio: [90, 100]
+  "Foid Syenite":
+    F: [10, 60]
+    P_ratio: [0, 10]
+  "Foid Monzosyenite":
+    F: [10, 60]
+    P_ratio: [10, 50]
+  "Foid Monzodiorite":
+    F: [10, 60]
+    P_ratio: [50, 90]
+  "Foid Diorite/Gabbro":
+    F: [10, 60]
+    P_ratio: [90, 100]
+  "Foidolite":
+    F: [60, 100]
+    P_ratio: [0, 100]

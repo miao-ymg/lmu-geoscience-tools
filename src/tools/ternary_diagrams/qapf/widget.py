@@ -9,6 +9,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 
 from .data import load_and_validate_data, normalize_qapf
 from .plot import plot_qapf
+from gui.components.toggle_group import ToggleGroup
 
 class UploadBox(QWidget):
     def __init__(self, on_file_selected, on_generate_clicked):
@@ -114,23 +115,23 @@ class UploadBox(QWidget):
             self.set_file(file_path)
 
 class PlotView(QWidget):
-    def __init__(self, on_new_sample, on_download, on_highlight_changed):
+    def __init__(self, on_new_sample, on_download, on_highlight_changed, on_classification_changed):
         super().__init__()
         self.layout = QVBoxLayout(self)
         
-        # Highlight controls
-        highlight_layout = QVBoxLayout()
+        # Toggles
+        toggles_layout = QHBoxLayout()
         
-        highlight_label = QLabel("Highlight Axis:")
-        highlight_label.setStyleSheet("color: #e0e0e0; font-weight: bold; font-size: 14px; margin-bottom: 5px;")
-        highlight_layout.addWidget(highlight_label)
+        self.highlight_toggle = ToggleGroup("Highlight Axis:", ['None', 'A', 'P'], 'None')
+        self.classification_toggle = ToggleGroup("Classification:", ['None', 'Volcanites', 'Plutonites'], 'None')
         
-        self.buttons_layout = QHBoxLayout()
-        self.highlight_group = QButtonGroup(self)
+        self.highlight_toggle.selectionChanged.connect(on_highlight_changed)
+        self.classification_toggle.selectionChanged.connect(on_classification_changed)
         
-        self.buttons_layout.addStretch()
-        highlight_layout.addLayout(self.buttons_layout)
-        self.layout.addLayout(highlight_layout)
+        toggles_layout.addWidget(self.highlight_toggle)
+        toggles_layout.addWidget(self.classification_toggle)
+        toggles_layout.addStretch()
+        self.layout.addLayout(toggles_layout)
         
         self.canvas_layout = QVBoxLayout()
         self.layout.addLayout(self.canvas_layout, stretch=1)
@@ -155,7 +156,6 @@ class PlotView(QWidget):
         btn_layout.addWidget(self.download_btn)
         
         self.new_sample_btn = QPushButton("New sample")
-        # Change new sample button to the generic neutral button style
         self.new_sample_btn.setStyleSheet("""
             QPushButton {
                 background-color: #333333;
@@ -176,60 +176,15 @@ class PlotView(QWidget):
         self.current_fig = None
         self.canvas = None
         
-        self.update_highlight_options('QAPF', on_highlight_changed)
+        self.update_highlight_options('QAPF')
         
-    def update_highlight_options(self, mode, on_highlight_changed=None):
-        # Remove old buttons
-        for btn in self.highlight_group.buttons():
-            self.highlight_group.removeButton(btn)
-            self.buttons_layout.removeWidget(btn)
-            btn.deleteLater()
-            
+    def update_highlight_options(self, mode):
         options = ['None', 'A', 'P']
         if mode in ['QAPF', 'QAP']:
             options.insert(1, 'Q')
         if mode in ['QAPF', 'APF']:
             options.append('F')
-            
-        for val in options:
-            btn = QPushButton(val)
-            btn.setCheckable(True)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #333333;
-                    color: #e0e0e0;
-                    border-radius: 5px;
-                    padding: 8px 15px;
-                    font-size: 14px;
-                    font-weight: bold;
-                    border: none;
-                }
-                QPushButton:checked {
-                    background-color: #a6e3a1;
-                    color: #1e1e1e;
-                }
-                QPushButton:hover:!checked {
-                    background-color: #444444;
-                }
-            """)
-            if val == 'None':
-                btn.setChecked(True)
-            self.highlight_group.addButton(btn)
-            # Insert before the stretch
-            count = self.buttons_layout.count()
-            if count > 0 and self.buttons_layout.itemAt(count - 1).spacerItem():
-                self.buttons_layout.insertWidget(count - 1, btn)
-            else:
-                self.buttons_layout.addWidget(btn)
-                
-        if on_highlight_changed:
-            # Reconnect signal, ignore old connections if any
-            try:
-                self.highlight_group.buttonClicked.disconnect()
-            except TypeError:
-                pass
-            self.highlight_group.buttonClicked.connect(lambda btn: on_highlight_changed(btn.text()))
+        self.highlight_toggle.update_options(options, 'None')
 
     def set_plot(self, fig):
         self.current_fig = fig
@@ -251,7 +206,7 @@ class QapfWidget(QWidget):
         self.stack = QStackedWidget()
         
         self.upload_view = UploadBox(self.on_file_selected, self.on_generate_clicked)
-        self.plot_view = PlotView(self.show_upload, self.download_plot, self.on_highlight_changed)
+        self.plot_view = PlotView(self.show_upload, self.download_plot, self.on_highlight_changed, self.on_classification_changed)
         
         self.stack.addWidget(self.upload_view)
         self.stack.addWidget(self.plot_view)
@@ -261,6 +216,7 @@ class QapfWidget(QWidget):
         self.current_file_path = None
         self.normalized_df = None
         self.current_highlight = 'None'
+        self.current_classification = 'None'
         self.current_mode = 'QAPF'
         
     def show_upload(self):
@@ -272,6 +228,10 @@ class QapfWidget(QWidget):
         
     def on_highlight_changed(self, highlight_val):
         self.current_highlight = highlight_val if highlight_val != 'None' else None
+        self.refresh_plot()
+        
+    def on_classification_changed(self, classification_val):
+        self.current_classification = classification_val if classification_val != 'None' else None
         self.refresh_plot()
         
     def on_generate_clicked(self):
@@ -287,7 +247,9 @@ class QapfWidget(QWidget):
         try:
             self.current_mode = mode
             self.current_highlight = 'None'
-            self.plot_view.update_highlight_options(mode, self.on_highlight_changed)
+            self.current_classification = 'None'
+            self.plot_view.update_highlight_options(mode)
+            self.plot_view.classification_toggle.update_options(['None', 'Volcanites', 'Plutonites'], 'None')
             self.normalized_df = normalize_qapf(df)
             self.refresh_plot()
             self.stack.setCurrentIndex(1)
@@ -298,7 +260,8 @@ class QapfWidget(QWidget):
         if self.normalized_df is None:
             return
         try:
-            fig = plot_qapf(self.normalized_df, mode=self.current_mode, dark_mode=True, highlight_axis=self.current_highlight)
+            fig = plot_qapf(self.normalized_df, mode=self.current_mode, dark_mode=True, 
+                            highlight_axis=self.current_highlight, classification=self.current_classification)
             self.plot_view.set_plot(fig)
         except Exception as e:
             QMessageBox.critical(self, "Plotting Error", f"An error occurred while regenerating the plot: {str(e)}")
@@ -322,7 +285,8 @@ class QapfWidget(QWidget):
         if file_path:
             try:
                 # Generate light-theme plot for saving
-                fig_to_save = plot_qapf(self.normalized_df, mode=self.current_mode, dark_mode=False, highlight_axis=self.current_highlight)
+                fig_to_save = plot_qapf(self.normalized_df, mode=self.current_mode, dark_mode=False, 
+                                        highlight_axis=self.current_highlight, classification=self.current_classification)
                 fig_to_save.savefig(file_path, dpi=300, bbox_inches='tight')
                 QMessageBox.information(self, "Success", "Plot successfully saved!")
             except Exception as e:
