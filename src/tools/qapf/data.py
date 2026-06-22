@@ -1,10 +1,20 @@
 import pandas as pd
 import os
+import sys
 import yaml
 
+def _get_resource_path(filename):
+    """Get absolute path to a resource file in the qapf package.
+    Works both in normal Python execution and inside a PyInstaller bundle."""
+    if getattr(sys, 'frozen', False):
+        # PyInstaller bundle: files are extracted to sys._MEIPASS/tools/qapf/
+        return os.path.join(sys._MEIPASS, 'tools', 'qapf', filename)
+    else:
+        # Normal execution: files are next to this script
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+
 # Load aliases from yaml
-current_dir = os.path.dirname(os.path.abspath(__file__))
-yaml_path = os.path.join(current_dir, 'column_aliases.yml')
+yaml_path = _get_resource_path('column_aliases.yml')
 with open(yaml_path, 'r') as f:
     ALIASES = yaml.safe_load(f)
 

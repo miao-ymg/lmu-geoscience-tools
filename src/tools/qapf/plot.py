@@ -1,12 +1,22 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import sys
 import yaml
 import matplotlib.patches as patches
 
+def _get_resource_path(filename):
+    """Get absolute path to a resource file in the qapf package.
+    Works both in normal Python execution and inside a PyInstaller bundle."""
+    if getattr(sys, 'frozen', False):
+        # PyInstaller bundle: files are extracted to sys._MEIPASS/tools/qapf/
+        return os.path.join(sys._MEIPASS, 'tools', 'qapf', filename)
+    else:
+        # Normal execution: files are next to this script
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+
 def get_classifications():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    yaml_path = os.path.join(current_dir, 'classifications.yml')
+    yaml_path = _get_resource_path('classifications.yml')
     if os.path.exists(yaml_path):
         with open(yaml_path, 'r') as f:
             return yaml.safe_load(f)
