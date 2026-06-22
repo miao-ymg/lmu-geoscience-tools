@@ -1,9 +1,8 @@
 import matplotlib.pyplot as plt
 
-def plot_tas(normalized_df, dark_mode=False):
+def plot_tas(normalized_df, dark_mode=False, rock_type='Volcanites'):
     """
-    Plots a TAS (Total Alkali-Silica) diagram using pyrolite.
-    Returns a matplotlib Figure object.
+    Generates a matplotlib Figure for the TAS diagram using pyrolite.
     """
     if dark_mode:
         bg_color = '#1e1e1e' # Pure neutral dark grey
@@ -23,7 +22,8 @@ def plot_tas(normalized_df, dark_mode=False):
     
     # Use pyrolite's TAS template. Imported locally to avoid GUI freezing on startup.
     from pyrolite.plot.templates import TAS
-    ax = TAS(ax=ax, add_labels=True, which_labels='volcanic', fontsize=8, linewidth=1.0, color=line_color)
+    which_labels = 'volcanic' if rock_type == 'Volcanites' else 'intrusive'
+    ax = TAS(ax=ax, add_labels=True, which_labels=which_labels, fontsize=8, linewidth=1.0, color=line_color)
     
     # Update label text colors
     for t in ax.texts:

@@ -46,7 +46,7 @@ def load_and_validate_data(file_path):
 
 def normalize_tas(df):
     """
-    For each row, drops LOI, normalizes all remaining values to 100%, 
+    For each row, drops LOI and the precomputed sum (if present), then normalizes all remaining values to 100%,
     and returns a DataFrame with SiO2 and Total_Alkali.
     """
     normalized_data = []
@@ -54,7 +54,7 @@ def normalize_tas(df):
     for _, row in df.iterrows():
         row_vals = {}
         for col, val in row.items():
-            if col == 'loi' or 'unnamed' in col: 
+            if not col or col in ['nan', 'none', 'sum', 'summe', 'total'] or col == 'loi' or 'unnamed' in col:
                 continue
             try:
                 num_val = float(val)

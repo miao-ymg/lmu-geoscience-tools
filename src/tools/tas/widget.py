@@ -6,13 +6,22 @@ from PyQt6.QtWidgets import (
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 
 from gui.components.upload_box import UploadBox
+from gui.components.toggle_group import ToggleGroup
 from .data import load_and_validate_data, normalize_tas
 from .plot import plot_tas
 
 class PlotView(QWidget):
-    def __init__(self, on_new_sample, on_download):
+    def __init__(self, on_new_sample, on_download, on_classification_changed):
         super().__init__()
         self.layout = QVBoxLayout(self)
+        
+        # Toggles layout
+        toggles_layout = QHBoxLayout()
+        self.classification_toggle = ToggleGroup("Classification:", ['Volcanites', 'Plutonites'], 'Volcanites')
+        self.classification_toggle.selectionChanged.connect(on_classification_changed)
+        toggles_layout.addWidget(self.classification_toggle)
+        toggles_layout.addStretch()
+        self.layout.addLayout(toggles_layout)
         
         self.canvas_layout = QVBoxLayout()
         self.layout.addLayout(self.canvas_layout, stretch=1)
@@ -78,7 +87,7 @@ class TasWidget(QWidget):
         self.stack = QStackedWidget()
         
         self.upload_view = UploadBox(self.on_file_selected, self.on_generate_clicked)
-        self.plot_view = PlotView(self.show_upload, self.download_plot)
+        self.plot_view = PlotView(self.show_upload, self.download_plot, self.on_classification_changed)
         
         self.stack.addWidget(self.upload_view)
         self.stack.addWidget(self.plot_view)
@@ -87,6 +96,7 @@ class TasWidget(QWidget):
         
         self.current_file_path = None
         self.normalized_df = None
+        self.current_classification = 'Volcanites'
         
     def show_upload(self):
         self.upload_view.reset()
@@ -94,6 +104,10 @@ class TasWidget(QWidget):
         
     def on_file_selected(self, file_path):
         self.current_file_path = file_path
+        
+    def on_classification_changed(self, classification_val):
+        self.current_classification = classification_val
+        self.refresh_plot()
         
     def on_generate_clicked(self):
         if not self.current_file_path:
@@ -116,7 +130,7 @@ class TasWidget(QWidget):
         if self.normalized_df is None:
             return
         try:
-            fig = plot_tas(self.normalized_df, dark_mode=True)
+            fig = plot_tas(self.normalized_df, dark_mode=True, rock_type=self.current_classification)
             self.plot_view.set_plot(fig)
         except Exception as e:
             QMessageBox.critical(self, "Plotting Error", f"An error occurred while regenerating the plot: {str(e)}")
@@ -136,7 +150,7 @@ class TasWidget(QWidget):
         if file_path:
             try:
                 # Generate light-theme plot for saving
-                fig_to_save = plot_tas(self.normalized_df, dark_mode=False)
+                fig_to_save = plot_tas(self.normalized_df, dark_mode=False, rock_type=self.current_classification)
                 fig_to_save.savefig(file_path, dpi=300, bbox_inches='tight')
                 QMessageBox.information(self, "Success", "Plot successfully saved!")
             except Exception as e:
