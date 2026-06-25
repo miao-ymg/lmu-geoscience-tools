@@ -1,0 +1,67 @@
+# Feldspar ternary diagram classifications.
+# A sample must satisfy ALL rules of a class to be classified as such.
+#
+# Rules:
+#   polygon        - Arbitrary polygon defined by {An, Or} vertices (%)
+#   An/Or/Ab       - Absolute min/max boundaries for that component (%)
+#   An/Or/Ab_ratio - Lines radiating from An/Or/Ab corner
+#   Or_perp        - Lines perpendicular to Ab-Or edge
+#
+# Optional:
+#   label_pos      - Manual label position {An, Or} (%)
+
+Default:
+  - name: "Miscibility Gap"
+    polygon:
+      - {An: 10, Or: 90}
+      - {An: 10, Or: 32}
+      - {An: 10.7, Or: 26.3}
+      - {An: 12.9, Or: 21.0}
+      - {An: 16.4, Or: 16.4}
+      - {An: 21.0, Or: 12.9}
+      - {An: 26.3, Or: 10.7}
+      - {An: 32, Or: 10}
+      - {An: 90, Or: 10}
+
+  - name: "Albite"
+    An_ratio: [0, 10]
+    Or_ratio: [0, 10]
+    label_pos: {An: 4, Or: 4}
+
+  - name: "Oligoclase"
+    An_ratio: [10, 30]
+    Ab_ratio: [0, 50]
+    Or: [0, 22]
+    label_pos: {An: 19, Or: 4}
+
+  - name: "Andesine"
+    An_ratio: [30, 50]
+    Or: [0, 12]
+    label_pos: {An: 38, Or: 4}
+
+  - name: "Labradorite"
+    An_ratio: [50, 70]
+    Or: [0, 10]
+    label_pos: {An: 58, Or: 4}
+
+  - name: "Bytownite"
+    An_ratio: [70, 90]
+    Or: [0, 10]
+    label_pos: {An: 77, Or: 4}
+
+  - name: "Anorthite"
+    An_ratio: [90, 100]
+    Or: [0, 10]
+    label_pos: {An: 91, Or: 4}
+
+  - name: "Sanidine"
+    Or_perp: [37, 100]
+    An: [0, 10]
+    label_pos: {An: 5, Or: 60}
+
+  - name: "Anorthoclase"
+    Or_ratio: [10, 100]
+    Or_perp: [0, 37]
+    Ab_ratio: [50, 100]
+    An: [0, 22]
+    label_pos: {An: 6, Or: 22}

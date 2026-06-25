@@ -12,7 +12,8 @@ a = Analysis(
     binaries=[],
     datas=[
         ('resources/style.qss', 'resources'),
-        ('src/tools/qapf/*.yml', 'tools/qapf')
+        ('src/tools/qapf/*.yml', 'tools/qapf'),
+        ('src/tools/feldspar/*.yml', 'tools/feldspar'),
     ] + pyrolite_datas,
     hiddenimports=['pyrolite', 'pyrolite.plot', 'pyrolite.plot.templates'],
     hookspath=[],

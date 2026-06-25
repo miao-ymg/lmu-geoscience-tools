@@ -1,0 +1,17 @@
+# Column aliases for Feldspar tool
+# Each key is the canonical element name; values are all accepted column name variants (case-insensitive)
+
+SODIUM:
+  - Na
+  - Sodium
+  - Natrium
+
+POTASSIUM:
+  - K
+  - Potassium
+  - Kalium
+
+CALCIUM:
+  - Ca
+  - Calcium
+  - Kalzium

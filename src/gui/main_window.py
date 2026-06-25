@@ -65,7 +65,8 @@ class MainWindow(QMainWindow):
         # --- TOOLS ARE HERE ---
         self.features = {
             "QAPF Diagrams": "QAPF Diagrams",
-            "TAS Diagrams": "TAS Diagrams"
+            "TAS Diagrams": "TAS Diagrams",
+            "Feldspar Diagrams": "Feldspar Diagrams"
         }
 
         self.setup_features()
@@ -83,6 +84,7 @@ class MainWindow(QMainWindow):
             import matplotlib.pyplot
             from tools.qapf.widget import QapfWidget
             from tools.tas.widget import TasWidget
+            from tools.feldspar.widget import FeldsparWidget
         except Exception:
             pass
 
@@ -157,6 +159,12 @@ class MainWindow(QMainWindow):
                     from tools.tas.widget import TasWidget
                     return TasWidget()
                 tool_widget = LazyWidget(get_tas)
+                content_layout.addWidget(tool_widget, stretch=1)
+            elif tool_name == "Feldspar Diagrams":
+                def get_feldspar():
+                    from tools.feldspar.widget import FeldsparWidget
+                    return FeldsparWidget()
+                tool_widget = LazyWidget(get_feldspar)
                 content_layout.addWidget(tool_widget, stretch=1)
             else:
                 # Add stretch to push content to top for unfinished tools
