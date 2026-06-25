@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, 
     QStackedWidget, QMessageBox, QHBoxLayout, QButtonGroup
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 
@@ -11,6 +11,38 @@ from .data import load_and_validate_data, normalize_qapf
 from .plot import plot_qapf
 from gui.components.toggle_group import ToggleGroup
 from gui.components.upload_box import UploadBox
+from gui.components.loading_overlays import PanelOverlay
+
+class PlotWorker(QThread):
+    finished = pyqtSignal(object, str, object, str)  # fig, error_msg, normalized_df, mode
+    
+    def __init__(self, file_path, normalized_df, mode, highlight, classification):
+        super().__init__()
+        self.file_path = file_path
+        self.normalized_df = normalized_df
+        self.mode = mode
+        self.highlight = highlight
+        self.classification = classification
+        
+    def run(self):
+        error_msg = None
+        fig = None
+        mode = self.mode
+        try:
+            if self.normalized_df is None and self.file_path:
+                df, mode, error = load_and_validate_data(self.file_path)
+                if error:
+                    self.finished.emit(None, error, None, mode)
+                    return
+                self.normalized_df = normalize_qapf(df)
+                
+            if self.normalized_df is not None:
+                fig = plot_qapf(self.normalized_df, mode=mode, dark_mode=True, 
+                                highlight_axis=self.highlight, classification=self.classification)
+        except Exception as e:
+            error_msg = f"An error occurred: {str(e)}"
+            
+        self.finished.emit(fig, error_msg, self.normalized_df, mode)
 
 class PlotView(QWidget):
     def __init__(self, on_new_sample, on_download, on_highlight_changed, on_classification_changed):
@@ -105,9 +137,11 @@ class QapfWidget(QWidget):
         
         self.upload_view = UploadBox(self.on_file_selected, self.on_generate_clicked)
         self.plot_view = PlotView(self.show_upload, self.download_plot, self.on_highlight_changed, self.on_classification_changed)
+        self.loading_overlay = PanelOverlay()
         
-        self.stack.addWidget(self.upload_view)
-        self.stack.addWidget(self.plot_view)
+        self.stack.addWidget(self.upload_view)   # Index 0
+        self.stack.addWidget(self.plot_view)     # Index 1
+        self.stack.addWidget(self.loading_overlay) # Index 2
         
         layout.addWidget(self.stack)
         
@@ -116,6 +150,8 @@ class QapfWidget(QWidget):
         self.current_highlight = 'None'
         self.current_classification = 'None'
         self.current_mode = 'QAPF'
+        
+        self.worker = None
         
     def show_upload(self):
         self.upload_view.reset()
@@ -136,33 +172,40 @@ class QapfWidget(QWidget):
         if not self.current_file_path:
             return
             
-        df, mode, error = load_and_validate_data(self.current_file_path)
-        
-        if error:
-            QMessageBox.warning(self, "Data Error", error)
-            return
-            
-        try:
-            self.current_mode = mode
-            self.current_highlight = 'None'
-            self.current_classification = 'None'
-            self.plot_view.update_highlight_options(mode)
-            self.plot_view.classification_toggle.update_options(['None', 'Volcanites', 'Plutonites'], 'None')
-            self.normalized_df = normalize_qapf(df)
-            self.refresh_plot()
-            self.stack.setCurrentIndex(1)
-        except Exception as e:
-            QMessageBox.critical(self, "Plotting Error", f"An error occurred while generating the plot: {str(e)}")
+        self.start_worker(file_path=self.current_file_path, show_loading=True)
 
     def refresh_plot(self):
         if self.normalized_df is None:
             return
-        try:
-            fig = plot_qapf(self.normalized_df, mode=self.current_mode, dark_mode=True, 
-                            highlight_axis=self.current_highlight, classification=self.current_classification)
+        self.start_worker(normalized_df=self.normalized_df, show_loading=False)
+            
+    def start_worker(self, file_path=None, normalized_df=None, show_loading=True):
+        if show_loading:
+            self.stack.setCurrentIndex(2) # Show loading screen
+        self.worker = PlotWorker(file_path, normalized_df, self.current_mode, 
+                                 self.current_highlight, self.current_classification)
+        self.worker.finished.connect(self.on_worker_finished)
+        self.worker.start()
+        
+    def on_worker_finished(self, fig, error_msg, normalized_df, mode):
+        self.worker = None
+        
+        if error_msg:
+            QMessageBox.critical(self, "Error", error_msg)
+            return
+            
+        if normalized_df is not None:
+            self.normalized_df = normalized_df
+            if self.current_mode != mode:
+                self.current_mode = mode
+                self.current_highlight = 'None'
+                self.current_classification = 'None'
+                self.plot_view.update_highlight_options(mode)
+                self.plot_view.classification_toggle.update_options(['None', 'Volcanites', 'Plutonites'], 'None')
+            
+        if fig:
             self.plot_view.set_plot(fig)
-        except Exception as e:
-            QMessageBox.critical(self, "Plotting Error", f"An error occurred while regenerating the plot: {str(e)}")
+            self.stack.setCurrentIndex(1)
 
     def download_plot(self):
         if self.normalized_df is None or not self.current_file_path:

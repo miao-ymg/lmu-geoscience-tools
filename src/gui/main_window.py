@@ -1,7 +1,31 @@
 import threading
-from PyQt6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
-                             QLabel, QTreeWidget, QTreeWidgetItem, QStackedWidget)
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (
+    QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, 
+    QLabel, QTreeWidget, QTreeWidgetItem, QStackedWidget
+)
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+
+from gui.components.loading_overlays import StartupOverlay
+
+class StartupWorker(QThread):
+    progress = pyqtSignal(int, str)
+    
+    def run(self):
+        try:
+            self.progress.emit(10, "Loading data science libraries (pandas)...")
+            import pandas
+            self.progress.emit(35, "Loading visualization engine (matplotlib)...")
+            import matplotlib.pyplot
+            self.progress.emit(60, "Initializing QAPF module...")
+            from tools.qapf.widget import QapfWidget
+            self.progress.emit(80, "Initializing TAS module...")
+            from tools.tas.widget import TasWidget
+            self.progress.emit(90, "Initializing Feldspar module...")
+            from tools.feldspar.widget import FeldsparWidget
+            self.progress.emit(100, "Ready!")
+            self.msleep(200) # Give a tiny pause at 100%
+        except Exception as e:
+            print(f"Error during background startup: {e}")
 
 class LazyWidget(QWidget):
     def __init__(self, loader_fn):
@@ -74,19 +98,22 @@ class MainWindow(QMainWindow):
         # Connect click event
         self.feature_tree.itemClicked.connect(self.on_feature_clicked)
         
-        # Start background preloading
-        threading.Thread(target=self.warmup_imports, daemon=True).start()
+        # Setup the loading overlay
+        self.startup_overlay = StartupOverlay(self.centralWidget())
+        self.startup_overlay.show()
+        
+        # Disable interaction while loading
+        self.centralWidget().setEnabled(False)
+        
+        self.startup_worker = StartupWorker()
+        self.startup_worker.progress.connect(self.startup_overlay.update_progress)
+        self.startup_worker.finished.connect(self.on_startup_finished)
+        self.startup_worker.start()
 
-    def warmup_imports(self):
-        """Silently imports heavy libraries in the background so the GUI doesn't freeze when clicked."""
-        try:
-            import pandas
-            import matplotlib.pyplot
-            from tools.qapf.widget import QapfWidget
-            from tools.tas.widget import TasWidget
-            from tools.feldspar.widget import FeldsparWidget
-        except Exception:
-            pass
+    def on_startup_finished(self):
+        self.startup_overlay.hide()
+        self.startup_overlay.deleteLater()
+        self.centralWidget().setEnabled(True)
 
     def setup_home_dashboard(self):
         home_widget = QWidget()

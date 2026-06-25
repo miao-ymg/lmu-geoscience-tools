@@ -3,12 +3,40 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
     QStackedWidget, QMessageBox, QFileDialog, QLabel
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 
 from gui.components.upload_box import UploadBox
+from gui.components.loading_overlays import PanelOverlay
 from .data import load_and_validate_data, compute_feldspar_endmembers
 from .plot import plot_feldspar
+
+
+class PlotWorker(QThread):
+    finished = pyqtSignal(object, str, object)  # fig, error_msg, endmembers_df
+    
+    def __init__(self, file_path, endmembers_df):
+        super().__init__()
+        self.file_path = file_path
+        self.endmembers_df = endmembers_df
+        
+    def run(self):
+        error_msg = None
+        fig = None
+        try:
+            if self.endmembers_df is None and self.file_path:
+                df, error = load_and_validate_data(self.file_path)
+                if error:
+                    self.finished.emit(None, error, None)
+                    return
+                self.endmembers_df = compute_feldspar_endmembers(df)
+                
+            if self.endmembers_df is not None:
+                fig = plot_feldspar(self.endmembers_df, dark_mode=True)
+        except Exception as e:
+            error_msg = f"An error occurred: {str(e)}"
+            
+        self.finished.emit(fig, error_msg, self.endmembers_df)
 
 
 class PlotView(QWidget):
@@ -81,13 +109,17 @@ class FeldsparWidget(QWidget):
         self.stack = QStackedWidget()
         self.upload_view = UploadBox(self.on_file_selected, self.on_generate_clicked)
         self.plot_view = PlotView(self.show_upload, self.download_plot)
+        self.loading_overlay = PanelOverlay()
 
-        self.stack.addWidget(self.upload_view)
-        self.stack.addWidget(self.plot_view)
+        self.stack.addWidget(self.upload_view)   # Index 0
+        self.stack.addWidget(self.plot_view)     # Index 1
+        self.stack.addWidget(self.loading_overlay) # Index 2
         layout.addWidget(self.stack)
 
         self.current_file_path = None
         self.endmembers_df = None
+        
+        self.worker = None
 
     # ── Callbacks ────────────────────────────────────────────────────
 
@@ -102,30 +134,35 @@ class FeldsparWidget(QWidget):
         if not self.current_file_path:
             return
 
-        df, error = load_and_validate_data(self.current_file_path)
-        if error:
-            QMessageBox.warning(self, "Data Error", error)
-            return
-
         QMessageBox.information(self, "Disclaimer", "Please note that you are responsible for providing correct raw Feldspar data. This tool only handles the visualization.")
 
-        try:
-            self.endmembers_df = compute_feldspar_endmembers(df)
-            self.refresh_plot()
-            self.stack.setCurrentIndex(1)
-        except Exception as e:
-            QMessageBox.critical(self, "Processing Error",
-                                 f"An error occurred while processing the data: {e}")
+        self.start_worker(file_path=self.current_file_path, show_loading=True)
 
     def refresh_plot(self):
         if self.endmembers_df is None:
             return
-        try:
-            fig = plot_feldspar(self.endmembers_df, dark_mode=True)
+        self.start_worker(endmembers_df=self.endmembers_df, show_loading=False)
+            
+    def start_worker(self, file_path=None, endmembers_df=None, show_loading=True):
+        if show_loading:
+            self.stack.setCurrentIndex(2) # Show loading screen
+        self.worker = PlotWorker(file_path, endmembers_df)
+        self.worker.finished.connect(self.on_worker_finished)
+        self.worker.start()
+        
+    def on_worker_finished(self, fig, error_msg, endmembers_df):
+        self.worker = None
+        
+        if error_msg:
+            QMessageBox.critical(self, "Error", error_msg)
+            return
+            
+        if endmembers_df is not None:
+            self.endmembers_df = endmembers_df
+            
+        if fig:
             self.plot_view.set_plot(fig)
-        except Exception as e:
-            QMessageBox.critical(self, "Plotting Error",
-                                 f"An error occurred while generating the plot: {e}")
+            self.stack.setCurrentIndex(1)
 
     def download_plot(self):
         if self.endmembers_df is None or not self.current_file_path:
