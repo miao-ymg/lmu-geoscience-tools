@@ -1,0 +1,32 @@
+Dunite:
+  Ol: [90, 100]
+Harzburgite:
+  Ol: [40, 90]
+  Cpx: [0, 5]
+Lherzolite:
+  Ol: [40, 90]
+  Cpx: [5, 100]
+  Opx: [5, 100]
+Wehrlite:
+  Ol: [40, 90]
+  Opx: [0, 5]
+Olivin-Orthopyroxenite:
+  Ol: [5, 40]
+  Cpx: [0, 5]
+  Opx: [0, 90]
+Olivin-Websterite:
+  Ol: [5, 40]
+  Cpx: [5, 100]
+  Opx: [5, 100]
+Olivin-Klinopyroxenite:
+  Ol: [5, 40]
+  Opx: [0, 5]
+  Cpx: [0, 90]
+Orthopyroxenite:
+  Opx: [90, 100]
+Websterite:
+  Ol: [0, 5]
+  Opx: [0, 90]
+  Cpx: [0, 90]
+Klinopyroxenite:
+  Cpx: [90, 100]

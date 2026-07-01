@@ -2,6 +2,8 @@ import sys
 import os
 import re
 import subprocess
+import matplotlib
+matplotlib.use('Agg')
 from PyQt6.QtWidgets import QApplication
 from gui.main_window import MainWindow
 
