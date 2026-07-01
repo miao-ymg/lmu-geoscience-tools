@@ -1,6 +1,6 @@
 import pytest
 import pandas as pd
-from src.tools.ternary_diagrams.qapf.data import normalize_qapf, load_and_validate_data
+from tools.qapf.data import normalize_qapf, load_and_validate_data
 import os
 
 def test_normalization():

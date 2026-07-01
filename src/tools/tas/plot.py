@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from tools.common.plot_utils import draw_sample_points
 
 def plot_tas(normalized_df, dark_mode=False, rock_type='Volcanites'):
     """
@@ -38,8 +39,8 @@ def plot_tas(normalized_df, dark_mode=False, rock_type='Volcanites'):
     
     if not normalized_df.empty:
         # Plot points
-        ax.scatter(normalized_df['SiO2'], normalized_df['Total_Alkali'], 
-                   color=point_color, edgecolors=edge_color, s=100, zorder=5, marker='o')
+        draw_sample_points(ax, normalized_df['SiO2'], normalized_df['Total_Alkali'], 
+                           point_color=point_color, edge_color=edge_color)
     
     # Configure axis styling
     ax.set_xlabel("SiO$_2$ (wt%)", color=text_color, fontweight='bold', fontsize=12)

@@ -6,66 +6,14 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from gui.components.upload_box import UploadBox
 from gui.components.loading_overlays import PanelOverlay
+from gui.components.plot_view import BasePlotView
+from .data import extract_and_normalize
+from .plot import plot_ultramafic
 
-# Simple PlotView that just embeds the canvas
-from PyQt6.QtWidgets import QHBoxLayout, QPushButton
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-
-class PlotView(QWidget):
+class PlotView(BasePlotView):
     def __init__(self, on_new_sample, on_download):
-        super().__init__()
-        self.layout = QVBoxLayout(self)
-        
-        self.canvas_layout = QVBoxLayout()
-        self.layout.addLayout(self.canvas_layout, stretch=1)
-        
-        # Buttons
-        btn_layout = QHBoxLayout()
-        
-        self.download_btn = QPushButton("Download Image")
-        self.download_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #a6e3a1;
-                color: #1e1e1e;
-                font-size: 14px;
-                font-weight: bold;
-                padding: 10px;
-                border-radius: 5px;
-            }
-            QPushButton:hover { background-color: #c3f0c9; }
-        """)
+        super().__init__(on_new_sample)
         self.download_btn.clicked.connect(on_download)
-        btn_layout.addWidget(self.download_btn)
-        
-        self.new_sample_btn = QPushButton("New sample")
-        self.new_sample_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #333333;
-                color: #e0e0e0;
-                font-size: 14px;
-                font-weight: bold;
-                padding: 10px;
-                border-radius: 5px;
-            }
-            QPushButton:hover { background-color: #444444; }
-        """)
-        self.new_sample_btn.clicked.connect(on_new_sample)
-        btn_layout.addWidget(self.new_sample_btn)
-        
-        self.layout.addLayout(btn_layout)
-        self.current_fig = None
-        self.canvas = None
-
-    def set_plot(self, fig):
-        self.current_fig = fig
-        for i in reversed(range(self.canvas_layout.count())): 
-            widget = self.canvas_layout.itemAt(i).widget()
-            if widget:
-                widget.setParent(None)
-            
-        self.canvas = FigureCanvas(fig)
-        self.canvas.setStyleSheet("background-color: transparent;")
-        self.canvas_layout.addWidget(self.canvas)
 
 import pandas as pd
 from tools.ultramafic.data import extract_and_normalize
@@ -154,23 +102,8 @@ class UltramaficWidget(QWidget):
             self.stack.setCurrentIndex(1)
 
     def download_plot(self):
-        from PyQt6.QtWidgets import QFileDialog
-        
-        if not self.plot_view.current_fig:
-            return
-            
-        file_path, _ = QFileDialog.getSaveFileName(
+        self.plot_view.handle_download(
             self,
-            "Save Plot",
-            os.path.expanduser("~/Desktop/ultramafic_diagram.png"),
-            "PNG Images (*.png);;PDF Documents (*.pdf);;SVG Graphics (*.svg)"
+            lambda: plot_ultramafic(self.normalized_df, dark_mode=False),
+            "ultramafic_diagram.png"
         )
-        
-        if file_path:
-            try:
-                # Generate a light-mode version for the exported file
-                fig = plot_ultramafic(self.normalized_df, dark_mode=False)
-                fig.savefig(file_path, dpi=300, bbox_inches='tight')
-                QMessageBox.information(self, "Success", f"Plot successfully saved to:\n{file_path}")
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to save plot:\n{str(e)}")

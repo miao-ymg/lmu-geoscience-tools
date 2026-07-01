@@ -8,6 +8,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 
 from gui.components.upload_box import UploadBox
 from gui.components.loading_overlays import PanelOverlay
+from gui.components.plot_view import BasePlotView
 from .data import load_and_validate_data, compute_feldspar_endmembers
 from .plot import plot_feldspar
 
@@ -39,65 +40,11 @@ class PlotWorker(QThread):
         self.finished.emit(fig, error_msg, self.endmembers_df)
 
 
-class PlotView(QWidget):
+class PlotView(BasePlotView):
     def __init__(self, on_new_sample, on_download):
-        super().__init__()
-        layout = QVBoxLayout(self)
-
-        self.canvas_layout = QVBoxLayout()
-        layout.addLayout(self.canvas_layout, stretch=1)
-
-        btn_layout = QHBoxLayout()
-
-        self.download_btn = QPushButton("Download Image")
-        self.download_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #a6e3a1;
-                color: #1e1e1e;
-                font-size: 14px;
-                font-weight: bold;
-                padding: 10px;
-                border-radius: 5px;
-            }
-            QPushButton:hover { background-color: #c3f0c9; }
-        """)
+        super().__init__(on_new_sample)
         self.download_btn.clicked.connect(on_download)
-        btn_layout.addWidget(self.download_btn)
-
-        self.new_sample_btn = QPushButton("New sample")
-        self.new_sample_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #333333;
-                color: #e0e0e0;
-                font-size: 14px;
-                font-weight: bold;
-                padding: 10px;
-                border-radius: 5px;
-            }
-            QPushButton:hover { background-color: #444444; }
-        """)
-        self.new_sample_btn.clicked.connect(on_new_sample)
-        btn_layout.addWidget(self.new_sample_btn)
-
-        layout.addLayout(btn_layout)
-        self.current_fig = None
-        self.canvas = None
-
-    def set_plot(self, fig):
-        self.current_fig = fig
-        for i in reversed(range(self.canvas_layout.count())):
-            w = self.canvas_layout.itemAt(i).widget()
-            if w:
-                w.setParent(None)
-        self.canvas = FigureCanvas(fig)
-        self.canvas.setStyleSheet("background-color: transparent;")
-        self.canvas_layout.addWidget(self.canvas)
-
-        warning_label = QLabel("Note: These classifications are only approximations and could therefore be inaccurate.")
-        warning_label.setStyleSheet("color: #ffaa00; font-style: italic; font-size: 13px;")
-        warning_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.canvas_layout.addWidget(warning_label)
-        self.canvas_layout.addSpacing(15)
+        self.set_note("Note: These classifications are only approximations and could therefore be inaccurate.")
 
 
 class FeldsparWidget(QWidget):
@@ -165,20 +112,8 @@ class FeldsparWidget(QWidget):
             self.stack.setCurrentIndex(1)
 
     def download_plot(self):
-        if self.endmembers_df is None or not self.current_file_path:
-            return
-
-        base_name = os.path.splitext(os.path.basename(self.current_file_path))[0]
-        default_name = f"{base_name}_feldspar_plot.png"
-
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Plot", default_name,
-            "PNG Images (*.png);;PDF Files (*.pdf)"
+        self.plot_view.handle_download(
+            self,
+            lambda: plot_feldspar(self.endmembers_df, dark_mode=False),
+            "feldspar_diagram.png"
         )
-        if file_path:
-            try:
-                fig = plot_feldspar(self.endmembers_df, dark_mode=False)
-                fig.savefig(file_path, dpi=300, bbox_inches='tight')
-                QMessageBox.information(self, "Success", "Plot saved successfully!")
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Could not save plot: {e}")

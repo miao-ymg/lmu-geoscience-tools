@@ -12,6 +12,7 @@ from .plot import plot_qapf
 from gui.components.toggle_group import ToggleGroup
 from gui.components.upload_box import UploadBox
 from gui.components.loading_overlays import PanelOverlay
+from gui.components.plot_view import BasePlotView
 
 class PlotWorker(QThread):
     finished = pyqtSignal(object, str, object, str)  # fig, error_msg, normalized_df, mode
@@ -44,13 +45,9 @@ class PlotWorker(QThread):
             
         self.finished.emit(fig, error_msg, self.normalized_df, mode)
 
-class PlotView(QWidget):
+class PlotView(BasePlotView):
     def __init__(self, on_new_sample, on_download, on_highlight_changed, on_classification_changed):
-        super().__init__()
-        self.layout = QVBoxLayout(self)
-        
-        # Toggles
-        toggles_layout = QHBoxLayout()
+        super().__init__(on_new_sample)
         
         self.highlight_toggle = ToggleGroup("Highlight Axis:", ['None', 'A', 'P'], 'None')
         self.classification_toggle = ToggleGroup("Classification:", ['None', 'Volcanites', 'Plutonites'], 'None')
@@ -58,53 +55,11 @@ class PlotView(QWidget):
         self.highlight_toggle.selectionChanged.connect(on_highlight_changed)
         self.classification_toggle.selectionChanged.connect(on_classification_changed)
         
-        toggles_layout.addWidget(self.highlight_toggle)
-        toggles_layout.addWidget(self.classification_toggle)
-        toggles_layout.addStretch()
-        self.layout.addLayout(toggles_layout)
+        self.add_top_widget(self.highlight_toggle)
+        self.add_top_widget(self.classification_toggle)
+        self.add_top_stretch()
         
-        self.canvas_layout = QVBoxLayout()
-        self.layout.addLayout(self.canvas_layout, stretch=1)
-        
-        btn_layout = QHBoxLayout()
-        
-        self.download_btn = QPushButton("Download Image")
-        self.download_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #a6e3a1;
-                color: #1e1e1e;
-                font-size: 14px;
-                font-weight: bold;
-                padding: 10px;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #c3f0c9;
-            }
-        """)
         self.download_btn.clicked.connect(on_download)
-        btn_layout.addWidget(self.download_btn)
-        
-        self.new_sample_btn = QPushButton("New sample")
-        self.new_sample_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #333333;
-                color: #e0e0e0;
-                font-size: 14px;
-                font-weight: bold;
-                padding: 10px;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #444444;
-            }
-        """)
-        self.new_sample_btn.clicked.connect(on_new_sample)
-        btn_layout.addWidget(self.new_sample_btn)
-        
-        self.layout.addLayout(btn_layout)
-        self.current_fig = None
-        self.canvas = None
         
         self.update_highlight_options('QAPF')
         
@@ -115,17 +70,6 @@ class PlotView(QWidget):
         if mode in ['QAPF', 'APF']:
             options.append('F')
         self.highlight_toggle.update_options(options, 'None')
-
-    def set_plot(self, fig):
-        self.current_fig = fig
-        for i in reversed(range(self.canvas_layout.count())): 
-            widget = self.canvas_layout.itemAt(i).widget()
-            if widget:
-                widget.setParent(None)
-            
-        self.canvas = FigureCanvas(fig)
-        self.canvas.setStyleSheet("background-color: transparent;")
-        self.canvas_layout.addWidget(self.canvas)
 
 class QapfWidget(QWidget):
     def __init__(self):
@@ -208,27 +152,9 @@ class QapfWidget(QWidget):
             self.stack.setCurrentIndex(1)
 
     def download_plot(self):
-        if self.normalized_df is None or not self.current_file_path:
-            return
-            
-        filename = os.path.basename(self.current_file_path)
-        base_name, _ = os.path.splitext(filename)
-        
-        suffix = ""
-        if self.current_highlight and self.current_highlight != 'None':
-            suffix = f"_{self.current_highlight}"
-            
-        default_save_name = f"{base_name}_plot{suffix}.png"
-            
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Plot", default_save_name, "PNG Images (*.png);;PDF Files (*.pdf)"
+        self.plot_view.handle_download(
+            self,
+            lambda: plot_qapf(self.normalized_df, mode=self.current_mode, dark_mode=False, 
+                              highlight_axis=self.current_highlight, classification=self.current_classification),
+            "qapf_diagram.png"
         )
-        if file_path:
-            try:
-                # Generate light-theme plot for saving
-                fig_to_save = plot_qapf(self.normalized_df, mode=self.current_mode, dark_mode=False, 
-                                        highlight_axis=self.current_highlight, classification=self.current_classification)
-                fig_to_save.savefig(file_path, dpi=300, bbox_inches='tight')
-                QMessageBox.information(self, "Success", "Plot successfully saved!")
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Could not save the plot: {str(e)}")

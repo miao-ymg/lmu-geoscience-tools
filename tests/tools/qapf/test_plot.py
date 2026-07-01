@@ -1,6 +1,6 @@
 import pytest
 import pandas as pd
-from src.tools.ternary_diagrams.qapf.plot import plot_qapf
+from tools.qapf.plot import plot_qapf
 import matplotlib
 
 # Use a non-interactive backend for testing

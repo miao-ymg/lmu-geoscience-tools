@@ -12,7 +12,7 @@ class ToggleGroup(QWidget):
         
         # Label
         self.label = QLabel(label_text)
-        self.label.setStyleSheet("color: #e0e0e0; font-weight: bold; font-size: 14px; margin-bottom: 5px;")
+        self.label.setObjectName("ToggleGroupLabel")
         self.layout.addWidget(self.label)
         
         # Buttons layout
@@ -33,26 +33,10 @@ class ToggleGroup(QWidget):
             
         for val in options:
             btn = QPushButton(val)
+            btn.setObjectName("ToggleBtn")
             btn.setCheckable(True)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #333333;
-                    color: #e0e0e0;
-                    border-radius: 5px;
-                    padding: 8px 15px;
-                    font-size: 14px;
-                    font-weight: bold;
-                    border: none;
-                }
-                QPushButton:checked {
-                    background-color: #a6e3a1;
-                    color: #1e1e1e;
-                }
-                QPushButton:hover:!checked {
-                    background-color: #444444;
-                }
-            """)
+            
             if val == default_option:
                 btn.setChecked(True)
             

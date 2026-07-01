@@ -5,7 +5,10 @@ import pandas as pd
 import os
 import sys
 import yaml
-
+from tools.common.plot_utils import (
+    setup_ternary_bounds, draw_ternary_outline, draw_ternary_grid,
+    draw_classifications_legend, draw_sample_points
+)
 def _get_resource_path(filename):
     """Get absolute path to a resource file in the feldspar package.
     Works both in normal Python execution and inside a PyInstaller bundle."""
@@ -37,24 +40,17 @@ def _ternary_coords(ab, or_, an):
     return x, y
 
 
-def plot_feldspar(endmembers_df: pd.DataFrame, dark_mode: bool = True) -> plt.Figure:
-    """
-    Generates a ternary feldspar diagram with columns Ab, Or, An.
-
-    Vertices (counter-clockwise):
-      bottom-left  = Ab
-      bottom-right = An
-      top          = Or
-
-    Returns a matplotlib Figure.
-    """
+def plot_feldspar(endmembers_df=None, dark_mode=True):
+    import numpy as np
+    
+    # Configure colors based on mode
     if dark_mode:
         bg_color    = '#1e1e1e'
         text_color  = '#e0e0e0'
         line_color  = '#e0e0e0'
         grid_color  = '#333333'
         point_color = 'orange'
-        edge_color  = '#1e1e1e'
+        edge_color  = 'black'
     else:
         bg_color    = 'white'
         text_color  = 'black'
@@ -79,46 +75,25 @@ def plot_feldspar(endmembers_df: pd.DataFrame, dark_mode: bool = True) -> plt.Fi
         ax = fig.add_axes([0.1, 0.05, 0.8, 0.90])
         
     ax.set_facecolor(bg_color)
-    # Set up the plot correctly centered
-    ax.set_aspect('equal', adjustable='box')
     ax.axis('off')
-    ax.set_xlim(-0.05, 1.05)
-    # Expand bottom limit to ensure chemical formulas are not cut off
-    ax.set_ylim(-0.15, 0.95)
-
+    
+    setup_ternary_bounds(ax, scale=1.0)
+    
     # ── Triangle outline ───────────────────────────────────────────────
-    # Vertices in 2-D:  Ab=(0,0), An=(1,0), Or=(0.5, sqrt(3)/2)
-    V_Ab = np.array([0.0, 0.0])
-    V_An = np.array([1.0, 0.0])
-    V_Or = np.array([0.5, np.sqrt(3) / 2])
-
-    triangle = plt.Polygon(
-        [V_Ab, V_An, V_Or],
-        closed=True,
-        fill=False,
-        edgecolor=line_color,
-        linewidth=2,
+    draw_ternary_outline(
+        ax, 
+        labels=[
+            ('Ab', 'NaAlSi$_3$O$_8$'), 
+            ('An', 'CaAl$_2$Si$_2$O$_8$'), 
+            ('Or', 'KAlSi$_3$O$_8$')
+        ], 
+        text_color=text_color, 
+        line_color=line_color, 
+        scale=1.0
     )
-    ax.add_patch(triangle)
 
     # ── Grid lines (every 10 %) ────────────────────────────────────────
-    for v in range(10, 100, 10):
-        frac = v / 100.0
-
-        # Constant Ab = frac: moves along Ab-An and Ab-Or
-        p1 = V_Ab + frac * (V_An - V_Ab)
-        p2 = V_Ab + frac * (V_Or - V_Ab)
-        ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=grid_color, linewidth=0.5, zorder=1)
-
-        # Constant An = frac
-        p1 = V_An + frac * (V_Ab - V_An)
-        p2 = V_An + frac * (V_Or - V_An)
-        ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=grid_color, linewidth=0.5, zorder=1)
-
-        # Constant Or = frac
-        p1 = V_Or + frac * (V_Ab - V_Or)
-        p2 = V_Or + frac * (V_An - V_Or)
-        ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=grid_color, linewidth=0.5, zorder=1)
+    draw_ternary_grid(ax, grid_color=grid_color, scale=1.0)
 
     # ── Classifications Overlay ───────────────────────────────────────
     # Read classifications
@@ -243,7 +218,7 @@ def plot_feldspar(endmembers_df: pd.DataFrame, dark_mode: bool = True) -> plt.Fi
             
             if class_name != "Miscibility Gap" and class_name not in drawn_labels:
                 # Add to legend
-                patch = mpatches.Patch(facecolor=color, edgecolor=line_color, linewidth=1.0, alpha=0.4, label=class_name)
+                patch = mpatches.Patch(color=color, alpha=0.4, label=class_name)
                 legend_handles.append(patch)
                 drawn_labels.add(class_name)
             
@@ -260,21 +235,7 @@ def plot_feldspar(endmembers_df: pd.DataFrame, dark_mode: bool = True) -> plt.Fi
                 
                 ax.text(center_x, center_y, class_name, color=text_color, fontsize=7, ha='center', va='center', zorder=5)
 
-    label_offset = 0.06
     sqrt3_2 = np.sqrt(3) / 2
-            
-    # Ab (bottom-left)
-    ax.text(0, -label_offset, "Ab", color=text_color, fontsize=14, ha='center', va='top', fontweight='bold')
-    ax.text(0, -label_offset - 0.05, "NaAlSi$_3$O$_8$", color=text_color, fontsize=10, ha='center', va='top')
-    
-    # An (bottom-right)
-    ax.text(1, -label_offset, "An", color=text_color, fontsize=14, ha='center', va='top', fontweight='bold')
-    ax.text(1, -label_offset - 0.05, "CaAl$_2$Si$_2$O$_8$", color=text_color, fontsize=10, ha='center', va='top')
-    
-    # Or (top)
-    ax.text(0.5, sqrt3_2 + label_offset, "Or", color=text_color, fontsize=14, ha='center', va='bottom', fontweight='bold')
-    ax.text(0.5, sqrt3_2 + label_offset - 0.04, "KAlSi$_3$O$_8$", color=text_color, fontsize=10, ha='center', va='bottom')
-
     # Edge texts
     # Ab-Or edge
     ax.text(0.20, sqrt3_2/2 + 0.05, "Alkali Feldspars", color=text_color, fontsize=12, ha='center', va='center', rotation=60)
@@ -288,11 +249,8 @@ def plot_feldspar(endmembers_df: pd.DataFrame, dark_mode: bool = True) -> plt.Fi
             x, y = _ternary_coords(row['Ab'], row['Or'], row['An'])
             xs.append(x)
             ys.append(y)
+        draw_sample_points(ax, xs, ys, point_color=point_color, edge_color=edge_color)
 
-        ax.scatter(xs, ys, color=point_color, s=100, edgecolors=edge_color, zorder=6, marker='o')
-
-    if legend_handles:
-        ax.legend(handles=legend_handles, loc='center left', bbox_to_anchor=(1.05, 0.5), 
-                  frameon=False, fontsize=10, labelcolor=text_color)
+    draw_classifications_legend(ax, legend_handles, text_color)
 
     return fig

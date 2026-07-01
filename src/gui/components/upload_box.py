@@ -16,57 +16,18 @@ class UploadBox(QWidget):
         self.drop_label = QLabel("Drag & Drop your Excel or CSV file here\nor click to browse")
         self.drop_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.drop_label.setTextFormat(Qt.TextFormat.RichText)
-        self.drop_label.setStyleSheet("""
-            QLabel {
-                border: 2px dashed #aaaaaa;
-                border-radius: 10px;
-                background-color: #252526;
-                font-size: 18px;
-                color: #e0e0e0;
-                padding: 50px;
-            }
-        """)
+        self.drop_label.setObjectName("UploadDropLabel")
         self.drop_label.mousePressEvent = self.open_file_dialog
         self.layout.addWidget(self.drop_label, stretch=1)
         
         self.upload_btn = QPushButton("Upload File")
-        self.upload_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #333333;
-                color: #e0e0e0;
-                font-size: 16px;
-                font-weight: bold;
-                padding: 10px;
-                border-radius: 5px;
-                margin-top: 10px;
-            }
-            QPushButton:hover {
-                background-color: #444444;
-            }
-        """)
+        self.upload_btn.setObjectName("UploadSelectBtn")
         self.upload_btn.clicked.connect(self.open_file_dialog)
         self.layout.addWidget(self.upload_btn)
         
         self.generate_btn = QPushButton("Generate Plot")
         self.generate_btn.setEnabled(False)
-        self.generate_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #a6e3a1;
-                color: #1e1e1e;
-                font-size: 18px;
-                font-weight: bold;
-                padding: 15px;
-                border-radius: 5px;
-                margin-top: 10px;
-            }
-            QPushButton:disabled {
-                background-color: #444444;
-                color: #888888;
-            }
-            QPushButton:hover:!disabled {
-                background-color: #c3f0c9;
-            }
-        """)
+        self.generate_btn.setObjectName("UploadGenerateBtn")
         self.generate_btn.clicked.connect(self.on_generate_clicked)
         self.layout.addWidget(self.generate_btn)
         

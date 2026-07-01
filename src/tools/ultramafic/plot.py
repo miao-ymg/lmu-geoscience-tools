@@ -1,13 +1,17 @@
 import matplotlib
 import matplotlib.cm as cm
 from matplotlib.figure import Figure
-import matplotlib.patches as mpatches
-from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.path import Path
 import yaml
 import os
 import numpy as np
+
+from tools.common.plot_utils import (
+    setup_ternary_bounds, draw_ternary_outline, draw_ternary_grid,
+    draw_classifications_legend, draw_sample_points
+)
 
 def load_classifications():
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -59,36 +63,19 @@ def plot_ultramafic(normalized_df=None, dark_mode=True):
     ax.set_facecolor(bg_color)
     
     ax.axis('off')
+    setup_ternary_bounds(ax, scale=100.0)
     
     def to_cartesian(ol, opx, cpx):
         total = ol + opx + cpx
         if total == 0:
             return 0, 0
         ol_n, opx_n, cpx_n = ol/total, opx/total, cpx/total
-        
-        # opx is at (0, 0)
-        # cpx is at (1, 0)
-        # ol is at (0.5, sqrt(3)/2)
         x = cpx_n + 0.5 * ol_n
         y = ol_n * np.sqrt(3) / 2.0
         return x * 100, y * 100
 
     # Draw subtle background grid
-    for v in range(10, 100, 10):
-        # Constant ol
-        p1 = to_cartesian(v, 100-v, 0)
-        p2 = to_cartesian(v, 0, 100-v)
-        ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=grid_color, linewidth=0.5, zorder=0)
-        # Constant opx
-        p1 = to_cartesian(100-v, v, 0)
-        p2 = to_cartesian(0, v, 100-v)
-        ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=grid_color, linewidth=0.5, zorder=0)
-        # Constant cpx
-        p1 = to_cartesian(100-v, 0, v)
-        p2 = to_cartesian(0, 100-v, v)
-        ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=grid_color, linewidth=0.5, zorder=0)
-        
-    
+    draw_ternary_grid(ax, grid_color, scale=100.0)
         
     def get_polygon_vertices(bounds):
         ol_min, ol_max = bounds.get('Ol', [0, 100])
@@ -168,28 +155,16 @@ def plot_ultramafic(normalized_df=None, dark_mode=True):
             legend_handles.append(patch)
         
     # Draw ternary outline and labels
-    corners = [to_cartesian(100,0,0), to_cartesian(0,100,0), to_cartesian(0,0,100)]
-    outline = mpatches.Polygon(corners, fill=False, edgecolor=text_color, linewidth=2, zorder=2)
-    ax.add_patch(outline)
-    
-    # Labels
-    offset = 5
-    top = to_cartesian(100,0,0)
-    left = to_cartesian(0,100,0)
-    right = to_cartesian(0,0,100)
-    
-    ax.text(top[0], top[1] + offset, 'Ol', ha='center', va='bottom', fontsize=16, color=text_color, fontweight='bold')
-    ax.text(left[0] - offset, left[1] - offset, 'Opx', ha='right', va='top', fontsize=16, color=text_color, fontweight='bold')
-    ax.text(right[0] + offset, right[1] - offset, 'Cpx', ha='left', va='top', fontsize=16, color=text_color, fontweight='bold')
-    
-    ax.set_xlim(-5, 105)
-    ax.set_ylim(-15, 95)
-    ax.set_aspect('equal', adjustable='box')
+    draw_ternary_outline(
+        ax, 
+        labels=['Opx', 'Cpx', 'Ol'], 
+        text_color=text_color, 
+        line_color=text_color, 
+        scale=100.0
+    )
     
     # Draw legend exactly like Feldspar
-    if legend_handles:
-        ax.legend(handles=legend_handles, loc='center left', bbox_to_anchor=(1.05, 0.5), 
-                  frameon=False, fontsize=10, labelcolor=text_color)
+    draw_classifications_legend(ax, legend_handles, text_color)
     
     # Plot samples
     if normalized_df is not None and not normalized_df.empty:
@@ -201,5 +176,6 @@ def plot_ultramafic(normalized_df=None, dark_mode=True):
             x_cart.append(cx)
             y_cart.append(cy)
             
-        ax.scatter(x_cart, y_cart, color='orange', s=100, edgecolors='black', linewidths=1, zorder=3, alpha=1.0)
+        draw_sample_points(ax, x_cart, y_cart, point_color='orange', edge_color='black')
+        
     return fig

@@ -81,3 +81,115 @@ QLabel#DashboardTitle {
 QLabel#DashboardSubtitle {
     color: @text-dim;
 }
+
+/* --- Refactored Widget Styles --- */
+
+/* ToggleGroup */
+QLabel#ToggleGroupLabel {
+    color: #e0e0e0;
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+QPushButton#ToggleBtn {
+    background-color: #333333;
+    color: #e0e0e0;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+QPushButton#ToggleBtn:hover {
+    background-color: #444444;
+}
+QPushButton#ToggleBtn:checked {
+    background-color: #a6e3a1;
+    color: #1e1e1e;
+}
+
+/* UploadBox */
+QLabel#UploadDropLabel {
+    border: 2px dashed #aaaaaa;
+    border-radius: 10px;
+    background-color: #252526;
+    font-size: 18px;
+    color: #e0e0e0;
+    padding: 50px;
+}
+QPushButton#UploadSelectBtn {
+    background-color: #333333;
+    color: #e0e0e0;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+QPushButton#UploadSelectBtn:hover {
+    background-color: #444444;
+}
+QPushButton#UploadGenerateBtn {
+    background-color: #a6e3a1;
+    color: #1e1e1e;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+QPushButton#UploadGenerateBtn:hover {
+    background-color: #c3f0c9;
+}
+QPushButton#UploadGenerateBtn:disabled {
+    background-color: #555555;
+    color: #888888;
+}
+
+/* PlotView */
+QLabel#PlotNoteLabel {
+    color: #ffaa00;
+    font-style: italic;
+    font-size: 13px;
+}
+QPushButton#PlotDownloadBtn, QPushButton#PlotNewSampleBtn {
+    font-size: 14px;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 5px;
+}
+QPushButton#PlotDownloadBtn {
+    background-color: #a6e3a1;
+    color: #1e1e1e;
+}
+QPushButton#PlotDownloadBtn:hover {
+    background-color: #c3f0c9;
+}
+QPushButton#PlotNewSampleBtn {
+    background-color: #333333;
+    color: #e0e0e0;
+}
+QPushButton#PlotNewSampleBtn:hover {
+    background-color: #444444;
+}
+QWidget#PlotCanvas {
+    background-color: transparent;
+}
+
+/* Loading Overlays */
+QLabel#LoadingStartupTitle {
+    color: white;
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+QLabel#LoadingStartupStatus {
+    color: #a0a0a0;
+    font-size: 14px;
+    font-style: italic;
+}
+QLabel#LoadingPanelStatus {
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}

@@ -113,16 +113,11 @@ class StartupOverlay(QWidget):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         title = QLabel("LMU Geoscience Tools")
-        title.setStyleSheet("""
-            color: white;
-            font-size: 32px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        """)
+        title.setObjectName("LoadingStartupTitle")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         self.status_label = QLabel("Initializing application...")
-        self.status_label.setStyleSheet("color: #a0a0a0; font-size: 14px; font-style: italic;")
+        self.status_label.setObjectName("LoadingStartupStatus")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         self.progress_bar = AnimatedProgressBar()
@@ -161,7 +156,7 @@ class PanelOverlay(QWidget):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         self.status_label = QLabel("Processing data and generating plot...")
-        self.status_label.setStyleSheet("color: white; font-size: 16px; font-weight: bold; margin-bottom: 10px;")
+        self.status_label.setObjectName("LoadingPanelStatus")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         self.progress_bar = AnimatedProgressBar()
