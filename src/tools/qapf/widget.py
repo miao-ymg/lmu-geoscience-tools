@@ -17,9 +17,8 @@ from gui.components.plot_view import BasePlotView
 class PlotWorker(QThread):
     finished = pyqtSignal(object, str, object, str)  # fig, error_msg, normalized_df, mode
     
-    def __init__(self, file_path, normalized_df, mode, highlight, classification):
+    def __init__(self, normalized_df, mode, highlight, classification):
         super().__init__()
-        self.file_path = file_path
         self.normalized_df = normalized_df
         self.mode = mode
         self.highlight = highlight
@@ -28,22 +27,14 @@ class PlotWorker(QThread):
     def run(self):
         error_msg = None
         fig = None
-        mode = self.mode
         try:
-            if self.normalized_df is None and self.file_path:
-                df, mode, error = load_and_validate_data(self.file_path)
-                if error:
-                    self.finished.emit(None, error, None, mode)
-                    return
-                self.normalized_df = normalize_qapf(df)
-                
             if self.normalized_df is not None:
-                fig = plot_qapf(self.normalized_df, mode=mode, dark_mode=True, 
+                fig = plot_qapf(self.normalized_df, mode=self.mode, dark_mode=True, 
                                 highlight_axis=self.highlight, classification=self.classification)
         except Exception as e:
             error_msg = f"An error occurred: {str(e)}"
             
-        self.finished.emit(fig, error_msg, self.normalized_df, mode)
+        self.finished.emit(fig, error_msg, self.normalized_df, self.mode)
 
 class PlotView(BasePlotView):
     def __init__(self, on_new_sample, on_download, on_highlight_changed, on_classification_changed):
@@ -96,6 +87,7 @@ class QapfWidget(QWidget):
         self.current_mode = 'QAPF'
         
         self.worker = None
+        self.old_workers = []
         
     def show_upload(self):
         self.upload_view.reset()
@@ -116,25 +108,53 @@ class QapfWidget(QWidget):
         if not self.current_file_path:
             return
             
-        self.start_worker(file_path=self.current_file_path, show_loading=True)
+        try:
+            df, mode, error = load_and_validate_data(self.current_file_path)
+            if error:
+                QMessageBox.critical(self, "Error", error)
+                return
+            normalized_df = normalize_qapf(df)
+            
+            if self.current_mode != mode:
+                self.current_mode = mode
+                self.current_highlight = 'None'
+                self.current_classification = 'None'
+                self.plot_view.update_highlight_options(mode)
+                self.plot_view.classification_toggle.update_options(['None', 'Volcanites', 'Plutonites'], 'None')
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
+            return
+            
+        self.start_worker(normalized_df=normalized_df, show_loading=True)
 
     def refresh_plot(self):
         if self.normalized_df is None:
             return
         self.start_worker(normalized_df=self.normalized_df, show_loading=False)
             
-    def start_worker(self, file_path=None, normalized_df=None, show_loading=True):
+    def start_worker(self, normalized_df, show_loading=True):
+        if self.worker is not None and self.worker.isRunning():
+            self.old_workers.append(self.worker)
+            
         if show_loading:
             self.stack.setCurrentIndex(2) # Show loading screen
-        self.worker = PlotWorker(file_path, normalized_df, self.current_mode, 
+        self.worker = PlotWorker(normalized_df, self.current_mode, 
                                  self.current_highlight, self.current_classification)
         self.worker.finished.connect(self.on_worker_finished)
         self.worker.start()
         
     def on_worker_finished(self, fig, error_msg, normalized_df, mode):
+        sender = self.sender()
+        if sender != self.worker:
+            if hasattr(self, 'old_workers') and sender in self.old_workers:
+                self.old_workers.remove(sender)
+            return
+            
         self.worker = None
         
         if error_msg:
+            self.stack.setCurrentIndex(0)
             QMessageBox.critical(self, "Error", error_msg)
             return
             

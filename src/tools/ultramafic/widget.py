@@ -22,17 +22,12 @@ from tools.ultramafic.plot import plot_ultramafic
 class PlotWorker(QThread):
     finished = pyqtSignal(object, str, object)
 
-    def __init__(self, file_path=None, normalized_df=None):
+    def __init__(self, normalized_df):
         super().__init__()
-        self.file_path = file_path
         self.normalized_df = normalized_df
 
     def run(self):
         try:
-            if self.file_path:
-                df = pd.read_excel(self.file_path)
-                self.normalized_df = extract_and_normalize(df)
-            
             fig = plot_ultramafic(self.normalized_df, dark_mode=True)
             self.finished.emit(fig, "", self.normalized_df)
         except Exception as e:
@@ -72,17 +67,25 @@ class UltramaficWidget(QWidget):
     def on_generate_clicked(self):
         if not self.current_file_path:
             return
-        self.start_worker(file_path=self.current_file_path, show_loading=True)
+            
+        try:
+            df = pd.read_excel(self.current_file_path)
+            normalized_df = extract_and_normalize(df)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
+            return
+            
+        self.start_worker(normalized_df=normalized_df, show_loading=True)
 
     def refresh_plot(self):
         if self.normalized_df is None:
             return
         self.start_worker(normalized_df=self.normalized_df, show_loading=False)
             
-    def start_worker(self, file_path=None, normalized_df=None, show_loading=True):
+    def start_worker(self, normalized_df, show_loading=True):
         if show_loading:
             self.stack.setCurrentIndex(2) # Show loading screen
-        self.worker = PlotWorker(file_path, normalized_df)
+        self.worker = PlotWorker(normalized_df)
         self.worker.finished.connect(self.on_worker_finished)
         self.worker.start()
         

@@ -16,22 +16,14 @@ from .plot import plot_feldspar
 class PlotWorker(QThread):
     finished = pyqtSignal(object, str, object)  # fig, error_msg, endmembers_df
     
-    def __init__(self, file_path, endmembers_df):
+    def __init__(self, endmembers_df):
         super().__init__()
-        self.file_path = file_path
         self.endmembers_df = endmembers_df
         
     def run(self):
         error_msg = None
         fig = None
         try:
-            if self.endmembers_df is None and self.file_path:
-                df, error = load_and_validate_data(self.file_path)
-                if error:
-                    self.finished.emit(None, error, None)
-                    return
-                self.endmembers_df = compute_feldspar_endmembers(df)
-                
             if self.endmembers_df is not None:
                 fig = plot_feldspar(self.endmembers_df, dark_mode=True)
         except Exception as e:
@@ -81,19 +73,31 @@ class FeldsparWidget(QWidget):
         if not self.current_file_path:
             return
 
-        QMessageBox.information(self, "Disclaimer", "Please note that you are responsible for providing correct raw Feldspar data. This tool only handles the visualization.")
-
-        self.start_worker(file_path=self.current_file_path, show_loading=True)
+        try:
+            df, error = load_and_validate_data(self.current_file_path)
+            if error:
+                QMessageBox.critical(self, "Error", error)
+                return
+            endmembers_df = compute_feldspar_endmembers(df)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
+            return
+            
+        # Show disclaimer only when a new file was successfully processed
+        if self.endmembers_df is None or not self.endmembers_df.equals(endmembers_df):
+            QMessageBox.information(self, "Disclaimer", "Please note that you are responsible for providing correct raw Feldspar data. This tool only handles the visualization.")
+            
+        self.start_worker(endmembers_df=endmembers_df, show_loading=True)
 
     def refresh_plot(self):
         if self.endmembers_df is None:
             return
         self.start_worker(endmembers_df=self.endmembers_df, show_loading=False)
             
-    def start_worker(self, file_path=None, endmembers_df=None, show_loading=True):
+    def start_worker(self, endmembers_df, show_loading=True):
         if show_loading:
             self.stack.setCurrentIndex(2) # Show loading screen
-        self.worker = PlotWorker(file_path, endmembers_df)
+        self.worker = PlotWorker(endmembers_df)
         self.worker.finished.connect(self.on_worker_finished)
         self.worker.start()
         
@@ -101,6 +105,7 @@ class FeldsparWidget(QWidget):
         self.worker = None
         
         if error_msg:
+            self.stack.setCurrentIndex(0)
             QMessageBox.critical(self, "Error", error_msg)
             return
             
