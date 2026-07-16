@@ -24,6 +24,8 @@ class StartupWorker(QThread):
             from tools.feldspar.widget import FeldsparWidget
             self.progress.emit(95, "Initializing Ultramafic module...")
             from tools.ultramafic.widget import UltramaficWidget
+            self.progress.emit(98, "Initializing Raman Spectra module...")
+            from tools.raman.widget import RamanWidget
             self.progress.emit(100, "Ready!")
             self.msleep(200) # Give a tiny pause at 100%
         except Exception as e:
@@ -93,7 +95,8 @@ class MainWindow(QMainWindow):
             "QAPF Diagrams": "QAPF Diagrams",
             "TAS Diagrams": "TAS Diagrams",
             "Feldspar Diagrams": "Feldspar Diagrams",
-            "Ultramafic Diagrams": "Ultramafic Diagrams"
+            "Ultramafic Diagrams": "Ultramafic Diagrams",
+            "Raman Spectra": "Raman Spectra"
         }
 
         self.setup_features()
@@ -201,6 +204,12 @@ class MainWindow(QMainWindow):
                     from tools.ultramafic.widget import UltramaficWidget
                     return UltramaficWidget()
                 tool_widget = LazyWidget(get_ultramafic)
+                content_layout.addWidget(tool_widget, stretch=1)
+            elif tool_name == "Raman Spectra":
+                def get_raman():
+                    from tools.raman.widget import RamanWidget
+                    return RamanWidget()
+                tool_widget = LazyWidget(get_raman)
                 content_layout.addWidget(tool_widget, stretch=1)
             else:
                 # Add stretch to push content to top for unfinished tools

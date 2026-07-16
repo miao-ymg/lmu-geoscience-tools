@@ -4,16 +4,20 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent
 
 class UploadBox(QWidget):
-    def __init__(self, on_file_selected, on_generate_clicked):
+    def __init__(self, on_file_selected, on_generate_clicked,
+                 drop_text="Drag & Drop your Excel or CSV file here\nor click to browse",
+                 file_filter="Excel & CSV Files (*.xlsx *.xls *.csv)"):
         super().__init__()
         self.on_file_selected = on_file_selected
         self.on_generate_clicked = on_generate_clicked
+        self.drop_text = drop_text
+        self.file_filter = file_filter
         self.setAcceptDrops(True)
         
         self.layout = QVBoxLayout(self)
         
         # --- File selection area ---
-        self.drop_label = QLabel("Drag & Drop your Excel or CSV file here\nor click to browse")
+        self.drop_label = QLabel(self.drop_text)
         self.drop_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.drop_label.setTextFormat(Qt.TextFormat.RichText)
         self.drop_label.setObjectName("UploadDropLabel")
@@ -35,7 +39,7 @@ class UploadBox(QWidget):
         
     def reset(self):
         self.current_file_path = None
-        self.drop_label.setText("Drag & Drop your Excel or CSV file here\nor click to browse")
+        self.drop_label.setText(self.drop_text)
         self.generate_btn.setEnabled(False)
         
     def set_file(self, file_path):
@@ -62,7 +66,7 @@ class UploadBox(QWidget):
             
     def open_file_dialog(self, event=None):
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open Data File", "", "Excel & CSV Files (*.xlsx *.xls *.csv)"
+            self, "Open Data File", "", self.file_filter
         )
         if file_path:
             self.set_file(file_path)

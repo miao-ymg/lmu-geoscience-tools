@@ -41,3 +41,4 @@ resources/**/*.png
 # === Logs ===
 .github/workflows/*.log
 generate_examples.py
+__init__.py
