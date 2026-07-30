@@ -3,9 +3,16 @@ import yaml
 import os
 import numpy as np
 
+import sys
+
+def _get_resource_path(filename):
+    if getattr(sys, 'frozen', False):
+        return os.path.join(sys._MEIPASS, 'tools', 'ultramafic', filename)
+    else:
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+
 def load_column_mappings():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    yml_path = os.path.join(current_dir, 'columns.yml')
+    yml_path = _get_resource_path('columns.yml')
     with open(yml_path, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 

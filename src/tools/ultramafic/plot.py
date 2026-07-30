@@ -13,9 +13,16 @@ from tools.common.plot_utils import (
     draw_classifications_legend, draw_sample_points
 )
 
+import sys
+
+def _get_resource_path(filename):
+    if getattr(sys, 'frozen', False):
+        return os.path.join(sys._MEIPASS, 'tools', 'ultramafic', filename)
+    else:
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+
 def load_classifications():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    yml_path = os.path.join(current_dir, 'classifications.yml')
+    yml_path = _get_resource_path('classifications.yml')
     with open(yml_path, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 

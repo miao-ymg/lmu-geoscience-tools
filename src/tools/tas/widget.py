@@ -116,6 +116,7 @@ class TasWidget(QWidget):
         sender = self.sender()
         if sender != self.worker:
             if hasattr(self, 'old_workers') and sender in self.old_workers:
+                sender.deleteLater()
                 self.old_workers.remove(sender)
             return
             
