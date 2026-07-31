@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QStackedWidget, QMessageBox
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal, QSettings
+import os
 
 from gui.components.upload_box import UploadBox
 from gui.components.loading_overlays import PanelOverlay
@@ -8,22 +9,18 @@ from .data import load_and_validate_data
 from .plot import plot_raman
 
 class PlotWorker(QThread):
-    finished = pyqtSignal(object, str, object)  # fig, error_msg, df
+    finished = pyqtSignal(object, str, dict)
     
-    def __init__(self, df):
+    def __init__(self, dfs_dict):
         super().__init__()
-        self.df = df
+        self.dfs_dict = dfs_dict
         
     def run(self):
-        error_msg = None
-        fig = None
         try:
-            if self.df is not None:
-                fig = plot_raman(self.df, dark_mode=True)
+            fig = plot_raman(self.dfs_dict, dark_mode=True)
+            self.finished.emit(fig, "", self.dfs_dict)
         except Exception as e:
-            error_msg = f"An error occurred: {str(e)}"
-            
-        self.finished.emit(fig, error_msg, self.df)
+            self.finished.emit(None, f"Error generating plot: {str(e)}", self.dfs_dict)
 
 class PlotView(BasePlotView):
     def __init__(self, on_new_sample, on_download):
@@ -40,8 +37,9 @@ class RamanWidget(QWidget):
         self.upload_view = UploadBox(
             self.on_file_selected, 
             self.on_generate_clicked,
-            drop_text="Drag & Drop your Raman Text file (.txt) here\nor click to browse",
-            file_filter="Text Files (*.txt);;All Files (*)"
+            drop_text="Drag & Drop your Raman Text files (.txt) here\nor click to browse",
+            file_filter="Text Files (*.txt);;All Files (*)",
+            multi_file=True
         )
         self.plot_view = PlotView(self.show_upload, self.download_plot)
         self.loading_overlay = PanelOverlay()
@@ -51,8 +49,8 @@ class RamanWidget(QWidget):
         self.stack.addWidget(self.loading_overlay) # Index 2
         layout.addWidget(self.stack)
         
-        self.current_file_path = None
-        self.df = None
+        self.current_file_paths = []
+        self.dfs_dict = {}
         
         self.worker = None
         self.old_workers = []
@@ -61,36 +59,39 @@ class RamanWidget(QWidget):
         self.upload_view.reset()
         self.stack.setCurrentIndex(0)
         
-    def on_file_selected(self, file_path):
-        self.current_file_path = file_path
+    def on_file_selected(self, file_paths):
+        self.current_file_paths = file_paths
         
     def on_generate_clicked(self):
-        if not self.current_file_path:
+        if not self.current_file_paths:
             return
             
+        dfs_dict = {}
         try:
-            df, error = load_and_validate_data(self.current_file_path)
-            if error:
-                QMessageBox.critical(self, "Error", error)
-                return
-            self.df = df
+            for file_path in self.current_file_paths:
+                df, error = load_and_validate_data(file_path)
+                if error:
+                    QMessageBox.critical(self, "Error", f"Error in file {os.path.basename(file_path)}: {error}")
+                    return
+                dfs_dict[os.path.basename(file_path)] = df
+            self.dfs_dict = dfs_dict
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
             return
             
-        self.start_worker(df=self.df, show_loading=True)
+        self.start_worker(dfs_dict=self.dfs_dict, show_loading=True)
             
-    def start_worker(self, df, show_loading=True):
+    def start_worker(self, dfs_dict, show_loading=True):
         if self.worker is not None and self.worker.isRunning():
             self.old_workers.append(self.worker)
             
         if show_loading:
             self.stack.setCurrentIndex(2) # Show loading screen
-        self.worker = PlotWorker(df)
+        self.worker = PlotWorker(dfs_dict)
         self.worker.finished.connect(self.on_worker_finished)
         self.worker.start()
         
-    def on_worker_finished(self, fig, error_msg, df):
+    def on_worker_finished(self, fig, error_msg, dfs_dict):
         sender = self.sender()
         if sender != self.worker:
             if hasattr(self, 'old_workers') and sender in self.old_workers:
@@ -105,8 +106,8 @@ class RamanWidget(QWidget):
             QMessageBox.critical(self, "Error", error_msg)
             return
             
-        if df is not None:
-            self.df = df
+        if dfs_dict is not None:
+            self.dfs_dict = dfs_dict
             
         if fig:
             self.plot_view.set_plot(fig)
@@ -115,6 +116,6 @@ class RamanWidget(QWidget):
     def download_plot(self):
         self.plot_view.handle_download(
             self,
-            lambda: plot_raman(self.df, dark_mode=False),
+            lambda: plot_raman(self.dfs_dict, dark_mode=False),
             "raman_spectra.png"
         )
