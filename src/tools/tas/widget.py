@@ -52,8 +52,13 @@ class TasWidget(QWidget):
         layout.setContentsMargins(20, 20, 20, 20)
         
         self.stack = QStackedWidget()
-        
-        self.upload_view = UploadBox(self.on_file_selected, self.on_generate_clicked)
+        instructions = (
+            "<div><p style='margin-bottom: 12px;'><b>Required columns (with list of all accepted column names)</b></p>"
+            "<p style='margin-top: 0px; margin-bottom: 8px;'>&bull; SiO2</p>"
+            "<p style='margin-top: 0px; margin-bottom: 8px;'>&bull; Na2O</p>"
+            "<p style='margin-top: 0px; margin-bottom: 8px;'>&bull; K2O</p></div>"
+        )
+        self.upload_view = UploadBox(self.on_file_selected, self.on_generate_clicked, instructions=instructions)
         self.plot_view = PlotView(self.show_upload, self.download_plot, self.on_classification_changed)
         self.loading_overlay = PanelOverlay()
         

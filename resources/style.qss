@@ -108,13 +108,28 @@ QPushButton#ToggleBtn:checked {
 }
 
 /* UploadBox */
-QLabel#UploadDropLabel {
+QFrame#UploadDropArea {
     border: 2px dashed #aaaaaa;
     border-radius: 10px;
     background-color: #252526;
+    padding: 30px;
+}
+QLabel#UploadDropLabel {
     font-size: 18px;
     color: #e0e0e0;
-    padding: 50px;
+    margin-bottom: 20px;
+}
+QFrame#InstructionsBox {
+    background-color: #1e1e1e;
+    border: 1px solid #444444;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+}
+QLabel#InstructionsLabel {
+    color: #b0b0b0;
+    font-size: 16px;
+    line-height: 2;
 }
 QPushButton#UploadSelectBtn {
     background-color: #333333;

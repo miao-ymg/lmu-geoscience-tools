@@ -12,7 +12,7 @@ def _get_resource_path(filename):
         return os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
 
 def load_column_mappings():
-    yml_path = _get_resource_path('columns.yml')
+    yml_path = _get_resource_path('column_aliases.yml')
     with open(yml_path, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 

@@ -69,8 +69,14 @@ class QapfWidget(QWidget):
         layout.setContentsMargins(20, 20, 20, 20)
         
         self.stack = QStackedWidget()
-        
-        self.upload_view = UploadBox(self.on_file_selected, self.on_generate_clicked)
+        instructions_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'column_aliases.yml')
+        from utils.instructions import generate_yaml_instructions
+        instructions = generate_yaml_instructions(instructions_path, optional_columns=['QUARTZ', 'FOID'])
+        instructions = instructions.replace(
+            "</div>", 
+            "<p style='margin-top: 8px; margin-bottom: 0px; color: #d4e8d4;'><i>Note: Your file must contain at least a Quartz (Q) or Foid (F) column.</i></p></div>"
+        )
+        self.upload_view = UploadBox(self.on_file_selected, self.on_generate_clicked, instructions=instructions)
         self.plot_view = PlotView(self.show_upload, self.download_plot, self.on_highlight_changed, self.on_classification_changed)
         self.loading_overlay = PanelOverlay()
         

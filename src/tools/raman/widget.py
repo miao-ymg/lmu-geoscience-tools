@@ -34,12 +34,18 @@ class RamanWidget(QWidget):
         layout.setContentsMargins(20, 20, 20, 20)
         
         self.stack = QStackedWidget()
+        instructions = (
+            "<div><p style='margin-bottom: 12px;'><b>Requirements:</b><br>File must contain lines with exactly two numbers:</p>"
+            "<p style='margin-top: 0px; margin-bottom: 8px;'>&bull; Raman Shift</p>"
+            "<p style='margin-top: 0px; margin-bottom: 0px;'>&bull; Intensity</p></div>"
+        )
         self.upload_view = UploadBox(
             self.on_file_selected, 
             self.on_generate_clicked,
-            drop_text="Drag & Drop your Raman Text files (.txt) here\nor click to browse",
-            file_filter="Text Files (*.txt);;All Files (*)",
-            multi_file=True
+            drop_text="Drag & Drop your text file here\nor click to browse",
+            file_filter="Text Files (*.txt);;All Files (*.*)",
+            multi_file=True,
+            instructions=instructions
         )
         self.plot_view = PlotView(self.show_upload, self.download_plot)
         self.loading_overlay = PanelOverlay()

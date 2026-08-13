@@ -1,5 +1,5 @@
 import os
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QFrame
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent
 
@@ -7,24 +7,46 @@ class UploadBox(QWidget):
     def __init__(self, on_file_selected, on_generate_clicked,
                  drop_text="Drag & Drop your Excel or CSV file here\nor click to browse",
                  file_filter="Excel & CSV Files (*.xlsx *.xls *.csv)",
-                 multi_file=False):
+                 multi_file=False, instructions=None):
         super().__init__()
         self.on_file_selected = on_file_selected
         self.on_generate_clicked = on_generate_clicked
         self.drop_text = drop_text
         self.file_filter = file_filter
         self.multi_file = multi_file
+        self.instructions = instructions
         self.setAcceptDrops(True)
         
         self.layout = QVBoxLayout(self)
         
         # --- File selection area ---
+        self.drop_area = QFrame()
+        self.drop_area.setObjectName("UploadDropArea")
+        self.drop_area_layout = QVBoxLayout(self.drop_area)
+        self.drop_area_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.drop_area.mousePressEvent = self.open_file_dialog
+        
         self.drop_label = QLabel(self.drop_text)
         self.drop_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.drop_label.setTextFormat(Qt.TextFormat.RichText)
         self.drop_label.setObjectName("UploadDropLabel")
-        self.drop_label.mousePressEvent = self.open_file_dialog
-        self.layout.addWidget(self.drop_label, stretch=1)
+        self.drop_area_layout.addWidget(self.drop_label)
+        
+        if self.instructions:
+            self.instructions_box = QFrame()
+            self.instructions_box.setObjectName("InstructionsBox")
+            self.instructions_layout = QVBoxLayout(self.instructions_box)
+            
+            self.instructions_label = QLabel(self.instructions)
+            self.instructions_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            self.instructions_label.setTextFormat(Qt.TextFormat.RichText)
+            self.instructions_label.setWordWrap(True)
+            self.instructions_label.setObjectName("InstructionsLabel")
+            
+            self.instructions_layout.addWidget(self.instructions_label)
+            self.drop_area_layout.addWidget(self.instructions_box)
+            
+        self.layout.addWidget(self.drop_area, stretch=1)
         
         self.upload_btn = QPushButton("Upload File")
         self.upload_btn.setObjectName("UploadSelectBtn")
