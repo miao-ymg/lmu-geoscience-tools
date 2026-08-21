@@ -109,6 +109,7 @@ class MainWindow(QMainWindow):
         self.feature_tree.setHeaderHidden(True)
         self.feature_tree.setRootIsDecorated(False)
         self.feature_tree.setIndentation(0)
+        self.feature_tree.installEventFilter(self)
         navbar_layout.addWidget(self.feature_tree)
 
         # Right Content Area
@@ -122,18 +123,19 @@ class MainWindow(QMainWindow):
         self.setup_home_dashboard()
 
         # --- TOOLS ARE HERE ---
-        self.features = {
+        features = {
             "QAPF Diagrams": "QAPF Diagrams",
             "TAS Diagrams": "TAS Diagrams",
             "Feldspar Diagrams": "Feldspar Diagrams",
             "Ultramafic Diagrams": "Ultramafic Diagrams",
             "Raman Spectra": "Raman Spectra"
         }
+        self.features = {k: features[k] for k in sorted(features.keys())}
 
         self.setup_features()
 
-        # Connect click event
-        self.feature_tree.itemClicked.connect(self.on_feature_clicked)
+        # Connect change event (supports both mouse and keyboard navigation)
+        self.feature_tree.currentItemChanged.connect(self.on_feature_changed)
         
         # Setup the loading overlay
         self.startup_overlay = StartupOverlay(self.centralWidget())
@@ -298,9 +300,11 @@ class MainWindow(QMainWindow):
             # Store the index of the widget in the item
             tool_item.setData(0, Qt.ItemDataRole.UserRole, self.content_area.count() - 1)
 
-    def on_feature_clicked(self, item, column):
+    def on_feature_changed(self, current_item, previous_item):
+        if not current_item:
+            return
         # Only switch content if it's a sub-feature (has UserRole data)
-        index = item.data(0, Qt.ItemDataRole.UserRole)
+        index = current_item.data(0, Qt.ItemDataRole.UserRole)
         if index is not None:
             widget = self.content_area.widget(index)
             # Find and load any LazyWidget inside this view
@@ -315,3 +319,11 @@ class MainWindow(QMainWindow):
                 self.showNormal()
             else:
                 self.close()
+
+    def eventFilter(self, obj, event):
+        from PyQt6.QtCore import QEvent
+        # Block auto-repeat for up/down arrow keys in the feature tree
+        if obj == self.feature_tree and event.type() == QEvent.Type.KeyPress:
+            if event.isAutoRepeat() and event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down):
+                return True
+        return super().eventFilter(obj, event)
