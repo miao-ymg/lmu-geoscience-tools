@@ -127,7 +127,7 @@ QFrame#InstructionsBox {
     margin-top: 10px;
 }
 QLabel#InstructionsLabel {
-    color: #b0b0b0;
+    color: #e0e0e0;
     font-size: 16px;
     line-height: 2;
 }

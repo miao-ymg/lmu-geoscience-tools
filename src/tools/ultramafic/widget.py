@@ -43,7 +43,8 @@ class UltramaficWidget(QWidget):
         layout.setContentsMargins(20, 20, 20, 20)
         
         self.stack = QStackedWidget()
-        instructions_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'column_aliases.yml')
+        from .data import _get_resource_path
+        instructions_path = _get_resource_path('column_aliases.yml')
         from utils.instructions import generate_yaml_instructions
         instructions = generate_yaml_instructions(instructions_path)
         self.upload_view = UploadBox(self.on_file_selected, self.on_generate_clicked, instructions=instructions)

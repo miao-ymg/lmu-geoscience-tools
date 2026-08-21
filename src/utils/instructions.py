@@ -9,8 +9,9 @@ def generate_yaml_instructions(yaml_path: str, optional_columns: list = None) ->
         if not data:
             return ""
             
-        lines = ["<div>"]
-        lines.append("<p style='margin-bottom: 12px;'><b>Required columns (with list of all accepted column names)</b></p>")
+        lines = []
+        lines.append("<p><b>Required columns (with list of all accepted column names)</b></p>")
+        lines.append("<ul>")
         
         for key, aliases in data.items():
             # If the key is all uppercase, title-case it. Otherwise, keep original casing (e.g., Ol, Opx, SiO2).
@@ -33,11 +34,11 @@ def generate_yaml_instructions(yaml_path: str, optional_columns: list = None) ->
                     else:
                         title_aliases.append(a_str)
                 display_aliases = ", ".join(title_aliases)
-                lines.append(f"<p style='margin-top: 0px; margin-bottom: 8px;'>&bull; <b>{key_name}</b>{opt_str}: <i>{display_aliases}</i></p>")
+                lines.append(f"<li><b>{key_name}</b>{opt_str}: <i>{display_aliases}</i></li>")
             else:
-                lines.append(f"<p style='margin-top: 0px; margin-bottom: 8px;'>&bull; <b>{key_name}</b>{opt_str}</p>")
+                lines.append(f"<li><b>{key_name}</b>{opt_str}</li>")
                 
-        lines.append("</div>")
+        lines.append("</ul>")
         return "".join(lines)
     except Exception as e:
         return f"<p style='color: red; font-size: 12px;'>Error loading instructions: {str(e)}</p>"

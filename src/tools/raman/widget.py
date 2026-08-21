@@ -35,9 +35,11 @@ class RamanWidget(QWidget):
         
         self.stack = QStackedWidget()
         instructions = (
-            "<div><p style='margin-bottom: 12px;'><b>Requirements:</b><br>File must contain lines with exactly two numbers:</p>"
-            "<p style='margin-top: 0px; margin-bottom: 8px;'>&bull; Raman Shift</p>"
-            "<p style='margin-top: 0px; margin-bottom: 0px;'>&bull; Intensity</p></div>"
+            "<p><b>Requirements:</b><br>File must contain lines with exactly two numbers:</p>"
+            "<ul>"
+            "<li>Raman Shift</li>"
+            "<li>Intensity</li>"
+            "</ul>"
         )
         self.upload_view = UploadBox(
             self.on_file_selected, 
