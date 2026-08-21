@@ -134,6 +134,23 @@ class MainWindow(QMainWindow):
 
         self.setup_features()
 
+        # Sliding Highlight Widget for the sidebar
+        from gui.components.sidebar_delegate import SidebarDelegate, SlidingAnimator
+        from PyQt6.QtCore import QPropertyAnimation, QEasingCurve, QRect, QTimer
+        
+        self.sidebar_delegate = SidebarDelegate(self.feature_tree)
+        self.feature_tree.setItemDelegate(self.sidebar_delegate)
+        self.feature_tree.setMouseTracking(True)
+        self.feature_tree.viewport().installEventFilter(self)
+        
+        self.sliding_animator = SlidingAnimator(self.feature_tree)
+        self.sliding_animator.rectChanged.connect(lambda: self.sidebar_delegate.set_sliding_rect(self.sliding_animator.rect))
+        
+        self.highlight_anim = QPropertyAnimation(self.sliding_animator, b"rect")
+        self.highlight_anim.setDuration(250)
+        self.highlight_anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
+        self.highlight_anim.finished.connect(self.sidebar_delegate.unblock_hover)
+
         # Connect change event (supports both mouse and keyboard navigation)
         self.feature_tree.currentItemChanged.connect(self.on_feature_changed)
         
@@ -148,6 +165,9 @@ class MainWindow(QMainWindow):
         self.startup_worker.progress.connect(self.startup_overlay.update_progress)
         self.startup_worker.finished.connect(self.on_startup_finished)
         self.startup_worker.start()
+
+        # Initialize highlight position once UI is laid out
+        QTimer.singleShot(100, lambda: self.on_feature_changed(self.feature_tree.currentItem(), None))
 
     def on_startup_finished(self):
         self.startup_overlay.hide()
@@ -303,6 +323,32 @@ class MainWindow(QMainWindow):
     def on_feature_changed(self, current_item, previous_item):
         if not current_item:
             return
+            
+        # Check if this was triggered by a mouse click
+        from PyQt6.QtWidgets import QApplication
+        from PyQt6.QtCore import Qt, QRectF
+        
+        is_mouse_click = bool(QApplication.mouseButtons() & Qt.MouseButton.LeftButton)
+        if is_mouse_click:
+            self.sidebar_delegate.instant_white_row = self.feature_tree.indexOfTopLevelItem(current_item)
+        else:
+            self.sidebar_delegate.instant_white_row = -1
+            
+        # Update the sliding highlight animation
+        target_rect = self.feature_tree.visualItemRect(current_item)
+        if target_rect.isValid():
+            target_rect = QRectF(14, target_rect.y() + 2, self.feature_tree.viewport().width() - 28, 42)
+            
+            if not self.sliding_animator.rect.isValid() or self.sliding_animator.rect.isEmpty():
+                self.sliding_animator.rect = target_rect
+            else:
+                self.sidebar_delegate.hover_blocked = True
+                self.sidebar_delegate.clear_hovers()
+                self.highlight_anim.stop()
+                self.highlight_anim.setStartValue(self.sliding_animator.rect)
+                self.highlight_anim.setEndValue(target_rect)
+                self.highlight_anim.start()
+                
         # Only switch content if it's a sub-feature (has UserRole data)
         index = current_item.data(0, Qt.ItemDataRole.UserRole)
         if index is not None:
@@ -326,4 +372,16 @@ class MainWindow(QMainWindow):
         if obj == self.feature_tree and event.type() == QEvent.Type.KeyPress:
             if event.isAutoRepeat() and event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down):
                 return True
+                
+        # Track hover in viewport
+        if obj == self.feature_tree.viewport():
+            if event.type() == QEvent.Type.MouseMove:
+                item = self.feature_tree.itemAt(event.pos())
+                for i in range(self.feature_tree.topLevelItemCount()):
+                    t_item = self.feature_tree.topLevelItem(i)
+                    self.sidebar_delegate.update_hover(i, t_item == item)
+            elif event.type() == QEvent.Type.Leave:
+                for i in range(self.feature_tree.topLevelItemCount()):
+                    self.sidebar_delegate.update_hover(i, False)
+                    
         return super().eventFilter(obj, event)

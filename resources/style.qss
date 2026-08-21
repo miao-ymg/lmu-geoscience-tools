@@ -97,26 +97,18 @@ QTreeWidget {
     show-decoration-selected: 0;
 }
 
+QTreeWidget::viewport {
+    background-color: transparent;
+}
+
 QTreeWidget::item {
     height: 42px;
     padding-left: 12px;
     padding-right: 12px;
     border-radius: 6px;
     margin: 2px 14px 2px 14px;
-    color: @text-dim;
+    color: transparent; /* drawn by delegate */
     border: none;
-}
-
-QTreeWidget::item:hover {
-    background-color: @bg-hover;
-    color: @text-main;
-}
-
-QTreeWidget::item:selected {
-    background-color: @bg-active;
-    color: #e2f0e4;
-    border: none;
-    font-weight: 600;
 }
 
 QTreeWidget::branch {
