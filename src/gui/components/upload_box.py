@@ -1,61 +1,97 @@
 import os
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QFrame
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog, QFrame
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent
 
 class UploadBox(QWidget):
     def __init__(self, on_file_selected, on_generate_clicked,
-                 drop_text="Drag & Drop your Excel or CSV file here\nor click to browse",
+                 drop_title="Excel or CSV",
                  file_filter="Excel & CSV Files (*.xlsx *.xls *.csv)",
                  multi_file=False, instructions=None):
         super().__init__()
         self.on_file_selected = on_file_selected
         self.on_generate_clicked = on_generate_clicked
-        self.drop_text = drop_text
+        self.drop_title = drop_title
         self.file_filter = file_filter
         self.multi_file = multi_file
         self.instructions = instructions
         self.setAcceptDrops(True)
         
         self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(28)
         
-        # --- File selection area ---
+        # --- File selection area (Upper Dashed Box) ---
         self.drop_area = QFrame()
         self.drop_area.setObjectName("UploadDropArea")
+        self.drop_area.setCursor(Qt.CursorShape.PointingHandCursor)
         self.drop_area_layout = QVBoxLayout(self.drop_area)
         self.drop_area_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.drop_area_layout.setSpacing(10)
         self.drop_area.mousePressEvent = self.open_file_dialog
         
-        self.drop_label = QLabel(self.drop_text)
-        self.drop_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.drop_label.setTextFormat(Qt.TextFormat.RichText)
-        self.drop_label.setObjectName("UploadDropLabel")
-        self.drop_area_layout.addWidget(self.drop_label)
+        # File upload icon badge
+        self.icon_badge = QLabel("📄")
+        self.icon_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.icon_badge.setObjectName("UploadIconBadge")
+        self.drop_area_layout.addWidget(self.icon_badge, alignment=Qt.AlignmentFlag.AlignCenter)
         
-        if self.instructions:
+        self.drop_title_label = QLabel(f"Drag & Drop your {self.drop_title} file here")
+        self.drop_title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.drop_title_label.setObjectName("UploadDropTitle")
+        self.drop_area_layout.addWidget(self.drop_title_label)
+        
+        self.drop_subtitle_label = QLabel("Or click to browse from your device")
+        self.drop_subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.drop_subtitle_label.setObjectName("UploadDropSubtitle")
+        self.drop_area_layout.addWidget(self.drop_subtitle_label)
+        
+        self.layout.addWidget(self.drop_area, stretch=1)
+        
+        # --- Instructions Box (Separate Lower Box) ---
+        if self.instructions and isinstance(self.instructions, dict):
             self.instructions_box = QFrame()
             self.instructions_box.setObjectName("InstructionsBox")
             self.instructions_layout = QVBoxLayout(self.instructions_box)
+            self.instructions_layout.setContentsMargins(12, 12, 12, 12)
             
-            self.instructions_label = QLabel(self.instructions)
-            self.instructions_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
-            self.instructions_label.setTextFormat(Qt.TextFormat.RichText)
-            self.instructions_label.setWordWrap(True)
-            self.instructions_label.setObjectName("InstructionsLabel")
+            # Header
+            header_layout = QHBoxLayout()
+            header_layout.setContentsMargins(0, 0, 0, 0)
             
-            self.instructions_layout.addWidget(self.instructions_label)
-            self.drop_area_layout.addWidget(self.instructions_box)
+            icon_label = QLabel("ⓘ")
+            icon_label.setObjectName("InstructionsIcon")
             
-        self.layout.addWidget(self.drop_area, stretch=1)
+            header_label = QLabel(self.instructions.get("header", ""))
+            header_label.setObjectName("InstructionsHeader")
+            header_label.setWordWrap(True)
+            
+            header_layout.addWidget(icon_label)
+            header_layout.addWidget(header_label, stretch=1)
+            
+            self.instructions_layout.addLayout(header_layout)
+            
+            # Bullets
+            for bullet in self.instructions.get("bullets", []):
+                bullet_label = QLabel(f"&bull; {bullet}")
+                bullet_label.setObjectName("InstructionsBullet")
+                bullet_label.setWordWrap(True)
+                self.instructions_layout.addWidget(bullet_label)
+                
+            # Note
+            note = self.instructions.get("note")
+            if note:
+                note_label = QLabel(note)
+                note_label.setObjectName("InstructionsNote")
+                note_label.setWordWrap(True)
+                self.instructions_layout.addWidget(note_label)
+            self.layout.addWidget(self.instructions_box)
         
-        self.upload_btn = QPushButton("Upload File")
-        self.upload_btn.setObjectName("UploadSelectBtn")
-        self.upload_btn.clicked.connect(self.open_file_dialog)
-        self.layout.addWidget(self.upload_btn)
-        
+        # --- Bottom Generate Plot Button (Green Bar) ---
         self.generate_btn = QPushButton("Generate Plot")
         self.generate_btn.setEnabled(False)
         self.generate_btn.setObjectName("UploadGenerateBtn")
+        self.generate_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.generate_btn.clicked.connect(self.on_generate_clicked)
         self.layout.addWidget(self.generate_btn)
         
@@ -65,7 +101,11 @@ class UploadBox(QWidget):
     def reset(self):
         self.current_file_path = None
         self.current_file_paths = []
-        self.drop_label.setText(self.drop_text)
+        self.drop_title_label.setText(f"Drag & Drop your {self.drop_title} file here")
+        self.drop_title_label.setProperty("selected", False)
+        self.drop_title_label.style().unpolish(self.drop_title_label)
+        self.drop_title_label.style().polish(self.drop_title_label)
+        self.drop_subtitle_label.show()
         self.generate_btn.setEnabled(False)
         
     def set_file(self, file_path):
@@ -82,15 +122,15 @@ class UploadBox(QWidget):
             
         if len(self.current_file_paths) == 1:
             filename = os.path.basename(self.current_file_paths[0])
-            label_text = f"Selected: <span style='color: #a6e3a1; font-weight: bold;'>{filename}</span>"
+            self.drop_title_label.setText(f"Selected: {filename}")
         else:
-            label_text = f"Selected: <span style='color: #a6e3a1; font-weight: bold;'>{len(self.current_file_paths)} files</span>"
+            self.drop_title_label.setText(f"Selected: {len(self.current_file_paths)} files")
             
-        # Show selected filename inside the drag area with bold green accent
-        self.drop_label.setText(
-            f"{label_text}"
-            f"<br><br><span style='font-size: 14px; color: #aaaaaa;'>(Drag & Drop again to change)</span>"
-        )
+        self.drop_title_label.setProperty("selected", True)
+        self.drop_title_label.style().unpolish(self.drop_title_label)
+        self.drop_title_label.style().polish(self.drop_title_label)
+        self.drop_subtitle_label.hide()
+        
         self.generate_btn.setEnabled(True)
         
         if self.multi_file:

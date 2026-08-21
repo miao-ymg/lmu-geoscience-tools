@@ -1,3 +1,5 @@
+import os
+import sys
 import threading
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, 
@@ -6,6 +8,15 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 
 from gui.components.loading_overlays import StartupOverlay
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 class StartupWorker(QThread):
     progress = pyqtSignal(int, str)
@@ -49,7 +60,10 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("LMU Geoscience Tools")
-        self.showFullScreen()
+        
+        # Set minimum size close to screen resolution (e.g. 1280x800) and maximize/fullscreen
+        self.setMinimumSize(1200, 750)
+        self.showMaximized()
 
         # Main widget and layout
         central_widget = QWidget()
@@ -61,23 +75,40 @@ class MainWindow(QMainWindow):
         # Left Navbar
         navbar_widget = QWidget()
         navbar_widget.setObjectName("Navbar")
-        navbar_widget.setFixedWidth(300)
+        navbar_widget.setFixedWidth(270)
         navbar_layout = QVBoxLayout(navbar_widget)
-        navbar_layout.setContentsMargins(0, 0, 0, 0)
+        navbar_layout.setContentsMargins(0, 0, 0, 20)
+        navbar_layout.setSpacing(0)
+
+        # Top Header Box
+        header_container = QWidget()
+        header_container.setObjectName("NavbarHeader")
+        header_layout = QVBoxLayout(header_container)
+        header_layout.setContentsMargins(20, 24, 20, 16)
+        header_layout.setSpacing(4)
 
         # Title
         title_label = QLabel("LMU Geoscience Tools")
         title_label.setObjectName("AppTitle")
-        font = title_label.font()
-        font.setPointSize(32)
-        font.setBold(True)
-        title_label.setFont(font)
-        title_label.setWordWrap(True)
-        navbar_layout.addWidget(title_label)
+        header_layout.addWidget(title_label)
+
+        # Subtitle
+        sub_label = QLabel("CHAIR OF GEOLOGY")
+        sub_label.setObjectName("AppSubtitle")
+        header_layout.addWidget(sub_label)
+
+        navbar_layout.addWidget(header_container)
+
+        # Section Header
+        section_label = QLabel("GEOSCIENCE TOOLSET")
+        section_label.setObjectName("SidebarSectionHeader")
+        navbar_layout.addWidget(section_label)
 
         # Feature List (Tree Widget)
         self.feature_tree = QTreeWidget()
         self.feature_tree.setHeaderHidden(True)
+        self.feature_tree.setRootIsDecorated(False)
+        self.feature_tree.setIndentation(0)
         navbar_layout.addWidget(self.feature_tree)
 
         # Right Content Area
@@ -122,41 +153,87 @@ class MainWindow(QMainWindow):
         self.centralWidget().setEnabled(True)
 
     def setup_home_dashboard(self):
-        home_widget = QWidget()
+        class HomeDashboardWidget(QWidget):
+            def __init__(self, parent=None):
+                super().__init__(parent)
+                self.setObjectName("HomeContainer")
+                from PyQt6.QtGui import QPixmap
+                bg_path = resource_path(os.path.join("resources", "home_bg.jpg"))
+                self.bg_pixmap = QPixmap(bg_path) if os.path.exists(bg_path) else None
+
+            def paintEvent(self, event):
+                from PyQt6.QtGui import QPainter, QColor
+                painter = QPainter(self)
+                painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+                # Fill base color
+                painter.fillRect(self.rect(), QColor("#161B22"))
+                
+                if self.bg_pixmap and not self.bg_pixmap.isNull():
+                    # Scale to cover the widget while keeping aspect ratio
+                    scaled = self.bg_pixmap.scaled(
+                        self.size(), 
+                        Qt.AspectRatioMode.KeepAspectRatioByExpanding, 
+                        Qt.TransformationMode.SmoothTransformation
+                    )
+                    # Center the pixmap
+                    x = (self.width() - scaled.width()) // 2
+                    y = (self.height() - scaled.height()) // 2
+                    painter.drawPixmap(x, y, scaled)
+                    
+                painter.end()
+
+        home_widget = HomeDashboardWidget()
         home_layout = QVBoxLayout(home_widget)
-        home_layout.setContentsMargins(50, 50, 50, 50)
+        home_layout.setContentsMargins(60, 60, 60, 60)
+        home_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        home_layout.addStretch()
+        home_layout.addStretch(1)
         
         # Dashboard Title
         welcome_label = QLabel("Welcome to LMU Geoscience Tools")
         welcome_label.setObjectName("DashboardTitle")
-        font = welcome_label.font()
-        font.setPointSize(36)
-        font.setBold(True)
-        welcome_label.setFont(font)
         welcome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         home_layout.addWidget(welcome_label)
         
-        # Subtitle
-        subtitle_label = QLabel("Select a tool from the sidebar to get started.")
+        # Subtitle / Description text and guaranteed center alignment
+        subtitle_label = QLabel(
+            '<div style="text-align: center; line-height: 120%;">'
+            'Select a tool from the sidebar to get started. These utilities facilitate rock classification,<br>'
+            'mineral chemistry plotting, and spectral analysis for academic petrology labs.'
+            '</div>'
+        )
         subtitle_label.setObjectName("DashboardSubtitle")
-        font = subtitle_label.font()
-        font.setPointSize(18)
-        subtitle_label.setFont(font)
         subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        subtitle_label.setTextFormat(Qt.TextFormat.RichText)
+        subtitle_label.setWordWrap(False)
         home_layout.addWidget(subtitle_label)
         
-        home_layout.addStretch()
+        home_layout.addStretch(1)
         
-        # Add Home item to the tree
+        # Bottom bar for Image credit at the right bottom
+        credit_layout = QHBoxLayout()
+        credit_layout.setContentsMargins(0, 0, 10, 5)
+        credit_layout.addStretch()
+        
+        credit_label = QLabel(
+            '<a href="https://www.magnific.com/free-ai-image/abstract-aerial-view-layered-geological-formations-desert-landscape_419049618.htm#fromView=keyword&page=1&position=2&uuid=9bdcd92b-9a15-4292-90c7-5f71638f2614&track=ais_hybrid&query=Geology+wallpaper" style="color: #627284; text-decoration: none; font-size: 11px;">Image by magnific</a>'
+        )
+        credit_label.setObjectName("HomeImageCredit")
+        credit_label.setOpenExternalLinks(True)
+        credit_label.setTextFormat(Qt.TextFormat.RichText)
+        credit_layout.addWidget(credit_label)
+        
+        home_layout.addLayout(credit_layout)
+        
+        # Add Home Portal item to the tree
         home_item = QTreeWidgetItem(self.feature_tree)
-        home_item.setText(0, "Home")
+        home_item.setText(0, "Home Portal")
         
         self.content_area.addWidget(home_widget)
         home_item.setData(0, Qt.ItemDataRole.UserRole, self.content_area.count() - 1)
         
-        # Select Home by default
+        # Select Home Portal by default
         self.feature_tree.setCurrentItem(home_item)
         self.content_area.setCurrentIndex(0)
 
@@ -168,13 +245,14 @@ class MainWindow(QMainWindow):
             # Create a simple widget for this sub-feature
             content_widget = QWidget()
             content_layout = QVBoxLayout(content_widget)
-            content_layout.setContentsMargins(0, 0, 0, 0)
+            content_layout.setContentsMargins(40, 36, 40, 36)
+            content_layout.setSpacing(28)
             
             # Add title at the top left
             content_label = QLabel(content_text)
             content_label.setObjectName("FeatureTitle")
             font = content_label.font()
-            font.setPointSize(26)
+            font.setPointSize(36)
             font.setBold(True)
             content_label.setFont(font)
             content_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)

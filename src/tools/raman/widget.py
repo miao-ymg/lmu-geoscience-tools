@@ -31,20 +31,18 @@ class RamanWidget(QWidget):
     def __init__(self):
         super().__init__()
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(24)
         
         self.stack = QStackedWidget()
-        instructions = (
-            "<p><b>Requirements:</b><br>File must contain lines with exactly two numbers:</p>"
-            "<ul>"
-            "<li>Raman Shift</li>"
-            "<li>Intensity</li>"
-            "</ul>"
-        )
+        instructions = {
+            "header": "<b>Requirements:</b> Each measurement point must be given as a line containing two space-separated values. The axis descriptions are given as follows:",
+            "bullets": ["<b>Raman Shift</b>", "<b>Intensity</b>"]
+        }
         self.upload_view = UploadBox(
             self.on_file_selected, 
             self.on_generate_clicked,
-            drop_text="Drag & Drop your text file here\nor click to browse",
+            drop_title="Text",
             file_filter="Text Files (*.txt);;All Files (*.*)",
             multi_file=True,
             instructions=instructions

@@ -1,18 +1,15 @@
 import yaml
 
-def generate_yaml_instructions(yaml_path: str, optional_columns: list = None) -> str:
-    """Generates an HTML instruction string from a column aliases YAML file."""
+def get_instructions_data(yaml_path: str, optional_columns: list = None) -> dict:
+    """Reads column aliases YAML and returns a dictionary for the instructions UI."""
     try:
         with open(yaml_path, 'r', encoding='utf-8') as f:
             data = yaml.safe_load(f)
             
         if not data:
-            return ""
+            return {}
             
-        lines = []
-        lines.append("<p><b>Required columns (with list of all accepted column names)</b></p>")
-        lines.append("<ul>")
-        
+        bullets = []
         for key, aliases in data.items():
             # If the key is all uppercase, title-case it. Otherwise, keep original casing (e.g., Ol, Opx, SiO2).
             key_name = key.title() if isinstance(key, str) and key.isupper() else key
@@ -20,7 +17,7 @@ def generate_yaml_instructions(yaml_path: str, optional_columns: list = None) ->
             # Format optional columns string
             opt_str = ""
             if optional_columns and key in optional_columns:
-                opt_str = " <i>(Optional)</i>"
+                opt_str = " (Optional)"
                 
             if isinstance(aliases, list):
                 # Keep original casing from YAML, unless the alias is ALL UPPERCASE, 
@@ -34,11 +31,13 @@ def generate_yaml_instructions(yaml_path: str, optional_columns: list = None) ->
                     else:
                         title_aliases.append(a_str)
                 display_aliases = ", ".join(title_aliases)
-                lines.append(f"<li><b>{key_name}</b>{opt_str}: <i>{display_aliases}</i></li>")
+                bullets.append(f"<b>{key_name}</b>{opt_str}: {display_aliases}")
             else:
-                lines.append(f"<li><b>{key_name}</b>{opt_str}</li>")
+                bullets.append(f"<b>{key_name}</b>{opt_str}")
                 
-        lines.append("</ul>")
-        return "".join(lines)
+        return {
+            "header": "<b>Required columns</b> (with list of all accepted column names)",
+            "bullets": bullets
+        }
     except Exception as e:
-        return f"<p style='color: red; font-size: 12px;'>Error loading instructions: {str(e)}</p>"
+        return {"header": f"Error loading instructions: {str(e)}", "bullets": []}

@@ -66,16 +66,14 @@ class QapfWidget(QWidget):
     def __init__(self):
         super().__init__()
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(24)
         
         self.stack = QStackedWidget()
         instructions_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'column_aliases.yml')
-        from utils.instructions import generate_yaml_instructions
-        instructions = generate_yaml_instructions(instructions_path, optional_columns=['QUARTZ', 'FOID'])
-        instructions = instructions.replace(
-            "</ul>", 
-            "</ul><p><i>Note: Your file must contain at least a Quartz (Q) or Foid (F) column.</i></p>"
-        )
+        from utils.instructions import get_instructions_data
+        instructions = get_instructions_data(instructions_path, optional_columns=['QUARTZ', 'FOID'])
+        instructions["note"] = "Note: Your file must contain at least a Quartz (Q) or Foid (F) column."
         self.upload_view = UploadBox(self.on_file_selected, self.on_generate_clicked, instructions=instructions)
         self.plot_view = PlotView(self.show_upload, self.download_plot, self.on_highlight_changed, self.on_classification_changed)
         self.loading_overlay = PanelOverlay()

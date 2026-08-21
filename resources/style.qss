@@ -1,14 +1,25 @@
 /*
 === THEME VARIABLES ===
-@bg-base: #1a1f1a;
-@bg-mantle: #141914;
-@bg-hover: #2a332a;
-@text-main: #d4e8d4;
-@text-dim: #8aab8a;
-@accent: #5a9e5a;
-@border: #2a332a;
+@bg-base: #161B22;
+@bg-mantle: #0D1117;
+@bg-hover: #1b222d;
+@bg-active: #223026;
+@border-active: #3e5a42;
+@text-main: #f0f3f6;
+@text-serif: #f0f3f6;
+@text-sub: #788390;
+@text-dim: #717d8a;
+@text-green: #52795d;
+@accent-green: #4d7a58;
+@border-dark: #21262d;
+@border-subtle: #30363d;
 =======================
 */
+
+/* Global Font Settings */
+* {
+    font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
 
 /* Main Background */
 QMainWindow {
@@ -18,7 +29,45 @@ QMainWindow {
 /* Navbar container */
 QWidget#Navbar {
     background-color: @bg-mantle;
-    border-right: 1px solid @border;
+    border-right: 1px solid @border-dark;
+}
+
+/* Navbar Header */
+QWidget#NavbarHeader {
+    background-color: transparent;
+    border-bottom: 1px solid @border-dark;
+    padding-bottom: 16px;
+}
+
+QLabel#AppTitle {
+    font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    font-size: 19px;
+    font-weight: 600;
+    color: #ffffff;
+    padding: 0px;
+    margin: 0px;
+}
+
+QLabel#AppSubtitle {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: #8ce637;
+    padding: 0px;
+    margin: 0px;
+}
+
+/* Section Header in Sidebar */
+QLabel#SidebarSectionHeader {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #5d6e7f;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 18px;
+    padding-bottom: 8px;
 }
 
 /* Content area */
@@ -26,33 +75,36 @@ QStackedWidget#ContentArea {
     background-color: @bg-base;
 }
 
-/* App Title */
-QLabel#AppTitle {
-    color: @text-main;
-    padding: 20px 10px 20px 10px;
-    border-bottom: 1px solid @border;
-}
-
 /* Feature Content Title */
 QLabel#FeatureTitle {
-    color: @text-main;
-    padding: 30px;
+    font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    font-size: 36px;
+    font-weight: 600;
+    color: #ffffff;
+    padding: 0px;
+    margin: 0px;
 }
 
 /* Sidebar Tree Widget */
 QTreeWidget {
-    background-color: @bg-mantle;
+    background-color: transparent;
     color: @text-dim;
     border: none;
-    font-size: 20px;
-    outline: none; /* remove focus dotted border */
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    outline: none;
     show-decoration-selected: 0;
 }
 
 QTreeWidget::item {
-    padding: 12px;
+    height: 42px;
+    padding-left: 12px;
+    padding-right: 12px;
     border-radius: 6px;
-    margin: 2px 10px 2px 10px;
+    margin: 2px 14px 2px 14px;
+    color: @text-dim;
+    border: none;
 }
 
 QTreeWidget::item:hover {
@@ -61,130 +113,228 @@ QTreeWidget::item:hover {
 }
 
 QTreeWidget::item:selected {
-    background-color: @accent;
-    color: @bg-base;
+    background-color: @bg-active;
+    color: #e2f0e4;
+    border: none;
+    font-weight: 600;
 }
 
 QTreeWidget::branch {
     background-color: transparent;
+    border: none;
+    image: none;
+}
+
+QTreeWidget::branch:has-siblings:!adjoins-item {
+    background-color: transparent;
+    border: none;
+    image: none;
+}
+
+QTreeWidget::branch:has-siblings:adjoins-item {
+    background-color: transparent;
+    border: none;
+    image: none;
+}
+
+QTreeWidget::branch:!has-children:!has-siblings:adjoins-item {
+    background-color: transparent;
+    border: none;
+    image: none;
+}
+
+QTreeWidget::branch:has-children:!has-siblings:closed,
+QTreeWidget::branch:closed:has-children:has-siblings {
+    background-color: transparent;
+    border: none;
+    image: none;
+}
+
+QTreeWidget::branch:open:has-children:!has-siblings,
+QTreeWidget::branch:open:has-children:has-siblings {
+    background-color: transparent;
+    border: none;
+    image: none;
 }
 
 QTreeWidget::branch:selected {
     background-color: transparent;
+    border: none;
+    image: none;
 }
 
 /* Home Dashboard */
+QWidget#HomeContainer {
+    background-color: transparent;
+}
+
 QLabel#DashboardTitle {
-    color: @accent;
+    font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    font-size: 46px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 12px;
+    background-color: transparent;
 }
 
 QLabel#DashboardSubtitle {
-    color: @text-dim;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: #8c9baa;
+    background-color: transparent;
+}
+
+QLabel#HomeImageCredit {
+    background-color: transparent;
+    font-family: "IBM Plex Sans", sans-serif;
+}
+QLabel#HomeImageCredit a {
+    color: #627284;
+    text-decoration: none;
+}
+QLabel#HomeImageCredit a:hover {
+    color: #8ce637;
 }
 
 /* --- Refactored Widget Styles --- */
 
 /* ToggleGroup */
 QLabel#ToggleGroupLabel {
-    color: #e0e0e0;
-    font-weight: bold;
-    font-size: 14px;
+    color: @text-main;
+    font-weight: 600;
+    font-size: 13px;
     margin-bottom: 5px;
 }
 QPushButton#ToggleBtn {
-    background-color: #333333;
-    color: #e0e0e0;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 4px;
-    font-weight: bold;
+    background-color: #1a222c;
+    color: @text-sub;
+    border: 1px solid #273140;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
 }
 QPushButton#ToggleBtn:hover {
-    background-color: #444444;
+    background-color: #232d3b;
+    color: @text-main;
 }
 QPushButton#ToggleBtn:checked {
-    background-color: #a6e3a1;
-    color: #1e1e1e;
+    background-color: #26382b;
+    color: #c9e8cd;
+    border: 1px solid #4a6e50;
 }
 
 /* UploadBox */
 QFrame#UploadDropArea {
-    border: 2px dashed #aaaaaa;
-    border-radius: 10px;
-    background-color: #252526;
+    border: 2px dashed #4e7330;
+    border-radius: 12px;
+    background-color: #1C212B;
     padding: 30px;
 }
-QLabel#UploadDropLabel {
-    font-size: 18px;
-    color: #e0e0e0;
-    margin-bottom: 20px;
+QFrame#UploadDropArea:hover {
+    border-color: #72a34f;
+    background-color: #222834;
+}
+QLabel#UploadIconBadge {
+    background-color: #232f22;
+    border-radius: 28px;
+    padding: 14px 18px;
+    font-size: 24px;
+    color: #8ce637;
+}
+QLabel#UploadDropTitle {
+    font-size: 16.5px;
+    font-weight: 700;
+    color: #ffffff;
+    background-color: transparent;
+}
+QLabel#UploadDropTitle[selected="true"] {
+    color: #8ce637;
+}
+QLabel#UploadDropSubtitle {
+    font-size: 13.5px;
+    color: #788796;
+    background-color: transparent;
 }
 QFrame#InstructionsBox {
-    background-color: #1e1e1e;
-    border: 1px solid #444444;
-    border-radius: 8px;
-    padding: 15px;
-    margin-top: 10px;
+    background-color: #1C212B;
+    border: 1px solid #28313e;
+    border-radius: 10px;
+    padding: 12px 16px;
 }
-QLabel#InstructionsLabel {
-    color: #e0e0e0;
-    font-size: 16px;
-    line-height: 2;
-}
-QPushButton#UploadSelectBtn {
-    background-color: #333333;
-    color: #e0e0e0;
-    font-size: 16px;
+QLabel#InstructionsIcon {
+    color: #8ce637;
     font-weight: bold;
-    padding: 10px;
-    border-radius: 5px;
-    margin-top: 10px;
+    font-size: 19px;
 }
-QPushButton#UploadSelectBtn:hover {
-    background-color: #444444;
+QLabel#InstructionsHeader {
+    color: #cad3df;
+    font-size: 15px;
+    background-color: transparent;
+}
+QLabel#InstructionsBullet {
+    color: #cad3df;
+    font-size: 14px;
+    margin-top: 3px;
+    margin-bottom: 3px;
+    background-color: transparent;
+}
+QLabel#InstructionsNote {
+    border-top: 1px solid #1a2330;
+    margin-top: 14px;
+    padding-top: 12px;
+    font-style: italic;
+    color: #8c9baa;
+    font-size: 13.5px;
+    background-color: transparent;
 }
 QPushButton#UploadGenerateBtn {
-    background-color: #a6e3a1;
-    color: #1e1e1e;
-    font-size: 18px;
-    font-weight: bold;
+    background-color: #8ce637;
+    color: #0b1008;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 15px;
+    font-weight: 700;
     padding: 15px;
-    border-radius: 5px;
-    margin-top: 10px;
+    border-radius: 8px;
+    border: none;
 }
 QPushButton#UploadGenerateBtn:hover {
-    background-color: #c3f0c9;
+    background-color: #9ef04d;
 }
 QPushButton#UploadGenerateBtn:disabled {
-    background-color: #555555;
-    color: #888888;
+    background-color: #182218;
+    color: #435b44;
+    border: 1px solid #223323;
 }
 
 /* PlotView */
 QLabel#PlotNoteLabel {
-    color: #ffaa00;
+    color: #d19a66;
     font-style: italic;
     font-size: 13px;
 }
 QPushButton#PlotDownloadBtn, QPushButton#PlotNewSampleBtn {
     font-size: 14px;
-    font-weight: bold;
-    padding: 10px;
-    border-radius: 5px;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 6px;
 }
 QPushButton#PlotDownloadBtn {
-    background-color: #a6e3a1;
-    color: #1e1e1e;
+    background-color: #3b6345;
+    color: #ffffff;
+    border: 1px solid #4d7a58;
 }
 QPushButton#PlotDownloadBtn:hover {
-    background-color: #c3f0c9;
+    background-color: #467552;
 }
 QPushButton#PlotNewSampleBtn {
-    background-color: #333333;
-    color: #e0e0e0;
+    background-color: #1b232e;
+    color: @text-main;
+    border: 1px solid #2a3647;
 }
 QPushButton#PlotNewSampleBtn:hover {
-    background-color: #444444;
+    background-color: #253040;
 }
 QWidget#PlotCanvas {
     background-color: transparent;
@@ -192,19 +342,19 @@ QWidget#PlotCanvas {
 
 /* Loading Overlays */
 QLabel#LoadingStartupTitle {
-    color: white;
+    font-family: "IBM Plex Serif", Georgia, serif;
+    color: #ffffff;
     font-size: 32px;
-    font-weight: bold;
+    font-weight: 600;
     margin-bottom: 20px;
 }
 QLabel#LoadingStartupStatus {
-    color: #a0a0a0;
+    color: @text-sub;
     font-size: 14px;
-    font-style: italic;
 }
 QLabel#LoadingPanelStatus {
-    color: white;
+    color: #ffffff;
     font-size: 16px;
-    font-weight: bold;
+    font-weight: 600;
     margin-bottom: 10px;
 }

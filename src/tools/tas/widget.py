@@ -49,17 +49,14 @@ class TasWidget(QWidget):
     def __init__(self):
         super().__init__()
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(24)
         
         self.stack = QStackedWidget()
-        instructions = (
-            "<p><b>Required columns (with list of all accepted column names)</b></p>"
-            "<ul>"
-            "<li>SiO2</li>"
-            "<li>Na2O</li>"
-            "<li>K2O</li>"
-            "</ul>"
-        )
+        instructions = {
+            "header": "<b>Required columns</b> (with list of all accepted column names)",
+            "bullets": ["<b>SiO2</b>", "<b>Na2O</b>", "<b>K2O</b>"]
+        }
         self.upload_view = UploadBox(self.on_file_selected, self.on_generate_clicked, instructions=instructions)
         self.plot_view = PlotView(self.show_upload, self.download_plot, self.on_classification_changed)
         self.loading_overlay = PanelOverlay()

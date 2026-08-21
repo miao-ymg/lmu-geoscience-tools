@@ -47,6 +47,18 @@ def main():
 
     app = QApplication(sys.argv)
     
+    # Load custom IBM Plex fonts
+    from PyQt6.QtGui import QFontDatabase, QFont
+    fonts_dir = resource_path(os.path.join("resources", "fonts"))
+    if os.path.exists(fonts_dir):
+        for font_file in os.listdir(fonts_dir):
+            if font_file.endswith(".ttf") or font_file.endswith(".otf"):
+                QFontDatabase.addApplicationFont(os.path.join(fonts_dir, font_file))
+                
+    # Set global default application font to IBM Plex Sans
+    default_font = QFont("IBM Plex Sans", 14)
+    app.setFont(default_font)
+    
     # Load and apply QSS stylesheet
     style_path = resource_path(os.path.join("resources", "style.qss"))
     stylesheet = load_stylesheet(style_path)
