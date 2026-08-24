@@ -11,8 +11,8 @@ from .plot import plot_raman
 class PlotWorker(QThread):
     finished = pyqtSignal(object, str, dict)
     
-    def __init__(self, dfs_dict):
-        super().__init__()
+    def __init__(self, dfs_dict, parent=None):
+        super().__init__(parent)
         self.dfs_dict = dfs_dict
         
     def run(self):
@@ -59,7 +59,6 @@ class RamanWidget(QWidget):
         self.dfs_dict = {}
         
         self.worker = None
-        self.old_workers = []
         
     def show_upload(self):
         self.upload_view.reset()
@@ -89,20 +88,19 @@ class RamanWidget(QWidget):
             
     def start_worker(self, dfs_dict, show_loading=True):
         if self.worker is not None and self.worker.isRunning():
-            self.old_workers.append(self.worker)
+            self.worker.finished.disconnect(self.on_worker_finished)
+            self.worker.finished.connect(self.worker.deleteLater)
             
         if show_loading:
             self.stack.setCurrentIndex(2) # Show loading screen
-        self.worker = PlotWorker(dfs_dict)
+        self.worker = PlotWorker(dfs_dict, parent=self)
         self.worker.finished.connect(self.on_worker_finished)
         self.worker.start()
         
     def on_worker_finished(self, fig, error_msg, dfs_dict):
         sender = self.sender()
         if sender != self.worker:
-            if hasattr(self, 'old_workers') and sender in self.old_workers:
-                sender.deleteLater()
-                self.old_workers.remove(sender)
+            sender.deleteLater()
             return
             
         self.worker = None

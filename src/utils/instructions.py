@@ -17,7 +17,7 @@ def get_instructions_data(yaml_path: str, optional_columns: list = None) -> dict
             # Format optional columns string
             opt_str = ""
             if optional_columns and key in optional_columns:
-                opt_str = " (Optional)"
+                opt_str = " <i>(Optional)</i>"
                 
             if isinstance(aliases, list):
                 # Keep original casing from YAML, unless the alias is ALL UPPERCASE, 
@@ -31,7 +31,7 @@ def get_instructions_data(yaml_path: str, optional_columns: list = None) -> dict
                     else:
                         title_aliases.append(a_str)
                 display_aliases = ", ".join(title_aliases)
-                bullets.append(f"<b>{key_name}</b>{opt_str}: {display_aliases}")
+                bullets.append(f"<b>{key_name}</b>{opt_str}:&nbsp; {display_aliases}")
             else:
                 bullets.append(f"<b>{key_name}</b>{opt_str}")
                 

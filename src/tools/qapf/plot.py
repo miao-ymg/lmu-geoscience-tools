@@ -4,6 +4,7 @@ import os
 import sys
 import yaml
 import matplotlib.patches as patches
+from theme import colors
 from tools.common.plot_utils import draw_sample_points, draw_classifications_legend
 
 def _get_resource_path(filename):
@@ -91,23 +92,25 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
     Returns a matplotlib Figure object.
     """
     if dark_mode:
-        bg_color = '#1e1e1e' # Pure neutral dark grey
-        line_color = '#e0e0e0'
-        text_color = '#e0e0e0'
-        grid_color = '#333333'
+        bg_color = colors['plot-bg-dark']
+        line_color = colors['plot-line-dark']
+        text_color = colors['plot-text-dark']
+        grid_color = colors['plot-grid-dark']
         grid_alpha = 1.0
-        point_color = 'orange' 
-        edge_color = '#1e1e1e'
-        accent_color = '#a6e3a1' # Green
+        
+        point_color = colors['plot-point-dark']
+        edge_color = colors['plot-edge-dark']
+        accent_color = colors['plot-accent-dark']
     else:
-        bg_color = 'white'
-        line_color = 'black'
-        text_color = 'black'
-        grid_color = '#dddddd'
-        grid_alpha = 1.0
-        point_color = 'orange'
-        edge_color = 'black'
-        accent_color = '#40a02b' # Darker green for light mode visibility
+        bg_color = colors['plot-bg-light']
+        line_color = colors['plot-line-light']
+        text_color = colors['plot-text-light']
+        grid_color = colors['plot-grid-light']
+        grid_alpha = 0.5
+        
+        point_color = colors['plot-point-light']
+        edge_color = colors['plot-edge-light']
+        accent_color = colors['plot-accent-light']
 
     has_right_panel = (classification and classification != 'None')
     
@@ -118,15 +121,15 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
     
     if mode == 'QAPF':
         if has_right_panel:
-            ax = fig.add_axes([0.05, 0.20, 0.55, 0.75])
+            ax = fig.add_axes([0.02, 0.18, 0.50, 0.80])
         else:
-            ax = fig.add_axes([0.1, 0.20, 0.8, 0.75])
+            ax = fig.add_axes([0.15, 0.18, 0.70, 0.80])
     else:
-        # Single triangle mode matches Feldspar layout perfectly
+        # Single triangle mode matches QAPF bottom padding for consistent colorbar
         if has_right_panel:
-            ax = fig.add_axes([0.15, 0.05, 0.55, 0.90])
+            ax = fig.add_axes([0.15, 0.15, 0.55, 0.80])
         else:
-            ax = fig.add_axes([0.1, 0.05, 0.8, 0.90])
+            ax = fig.add_axes([0.15, 0.15, 0.70, 0.80])
         
     ax.set_facecolor(bg_color)
     
@@ -165,10 +168,10 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
                 import matplotlib.cm as cm
                 cmap = cm.get_cmap('tab20')
                 
-            colors = [cmap(i % 20) for i in range(len(class_dict))]
+            class_colors = [cmap(i % 20) for i in range(len(class_dict))]
             legend_handles = []
             
-            for (name, data), color in zip(class_dict.items(), colors):
+            for (name, data), color in zip(class_dict.items(), class_colors):
                 c_type = 'QAP' if 'Q' in data else 'APF'
                 if mode == 'QAP' and c_type != 'QAP': continue
                 if mode == 'APF' and c_type != 'APF': continue
@@ -198,7 +201,7 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
                 legend_handles.append(patch)
             
             if legend_handles:
-                draw_classifications_legend(ax, legend_handles, text_color)
+                draw_classifications_legend(ax, legend_handles, text_color, ncols=2 if mode == 'QAPF' else 1)
     
 
     # Draw the outline of the two triangles
@@ -241,10 +244,10 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
     
     # Add text labels at the corners (only for QAPF double diagram, singles use draw_ternary_outline)
     if mode == 'QAPF':
-        ax.text(Q[0], Q[1] + 5, "Q", fontsize=16, ha='center', va='center', fontweight='bold', color=text_color)
-        ax.text(A[0] - 5, A[1], "A", fontsize=16, ha='right', va='center', fontweight='bold', color=text_color)
-        ax.text(P[0] + 5, P[1], "P", fontsize=16, ha='left', va='center', fontweight='bold', color=text_color)
-        ax.text(F[0], F[1] - 5, "F", fontsize=16, ha='center', va='center', fontweight='bold', color=text_color)
+        ax.text(Q[0], Q[1] + 12, "Q", fontsize=16, ha='center', va='center', fontweight='bold', color=text_color)
+        ax.text(A[0] - 8, A[1], "A", fontsize=16, ha='right', va='center', fontweight='bold', color=text_color)
+        ax.text(P[0] + 8, P[1], "P", fontsize=16, ha='left', va='center', fontweight='bold', color=text_color)
+        ax.text(F[0], F[1] - 12, "F", fontsize=16, ha='center', va='center', fontweight='bold', color=text_color)
     
     # Make sure we can see the labels
     if mode == 'QAP' or mode == 'APF':
@@ -258,8 +261,8 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
         else: # APF single triangle is drawn pointing UP now!
             ax.set_ylim(-pad_y_bottom, 100 * sqrt3_2 + pad_y_top)
     else:
-        ax.set_xlim(-55, 55)
-        ax.set_ylim(-100 * sqrt3_2 - 15, 100 * sqrt3_2 + 10)
+        ax.set_xlim(-65, 65)
+        ax.set_ylim(-105, 105)
     
     ax.set_aspect('equal')
     ax.axis('off')  # Hide grid and axes
@@ -277,13 +280,13 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
     if highlight_axis in ['Q', 'A', 'P', 'F']:
         # Position colorbar under the main triangle, centered
         if mode == 'QAPF':
-            ax_x = 0.05 if has_right_panel else 0.1
-            ax_w = 0.55 if has_right_panel else 0.8
+            ax_x = 0.02 if has_right_panel else 0.15
+            ax_w = 0.50 if has_right_panel else 0.70
+            cbar_y = 0.11
         else:
-            ax_x = 0.15 if has_right_panel else 0.1
-            ax_w = 0.55 if has_right_panel else 0.8
-            
-        cbar_y = 0.08
+            ax_x = 0.15
+            ax_w = 0.55 if has_right_panel else 0.70
+            cbar_y = 0.11
             
         # Center a 0.5 wide colorbar under the axes
         cbar_w = 0.5

@@ -22,8 +22,8 @@ from tools.ultramafic.plot import plot_ultramafic
 class PlotWorker(QThread):
     finished = pyqtSignal(object, str, object)
 
-    def __init__(self, normalized_df):
-        super().__init__()
+    def __init__(self, normalized_df, parent=None):
+        super().__init__(parent)
         self.normalized_df = normalized_df
 
     def run(self):
@@ -88,13 +88,22 @@ class UltramaficWidget(QWidget):
         self.start_worker(normalized_df=self.normalized_df, show_loading=False)
             
     def start_worker(self, normalized_df, show_loading=True):
+        if self.worker is not None and self.worker.isRunning():
+            self.worker.finished.disconnect(self.on_worker_finished)
+            self.worker.finished.connect(self.worker.deleteLater)
+            
         if show_loading:
             self.stack.setCurrentIndex(2) # Show loading screen
-        self.worker = PlotWorker(normalized_df)
+        self.worker = PlotWorker(normalized_df, parent=self)
         self.worker.finished.connect(self.on_worker_finished)
         self.worker.start()
         
     def on_worker_finished(self, fig, error_msg, normalized_df):
+        sender = self.sender()
+        if sender != self.worker:
+            sender.deleteLater()
+            return
+            
         self.worker = None
         
         if error_msg:

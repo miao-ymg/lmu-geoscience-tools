@@ -16,8 +16,8 @@ from .plot import plot_feldspar
 class PlotWorker(QThread):
     finished = pyqtSignal(object, str, object)  # fig, error_msg, endmembers_df
     
-    def __init__(self, endmembers_df):
-        super().__init__()
+    def __init__(self, endmembers_df, parent=None):
+        super().__init__(parent)
         self.endmembers_df = endmembers_df
         
     def run(self):
@@ -99,22 +99,31 @@ class FeldsparWidget(QWidget):
         self.start_worker(endmembers_df=self.endmembers_df, show_loading=False)
             
     def start_worker(self, endmembers_df, show_loading=True):
+        if self.worker is not None and self.worker.isRunning():
+            self.worker.finished.disconnect(self.on_worker_finished)
+            self.worker.finished.connect(self.worker.deleteLater)
+            
         if show_loading:
             self.stack.setCurrentIndex(2) # Show loading screen
-        self.worker = PlotWorker(endmembers_df)
+        self.worker = PlotWorker(endmembers_df, parent=self)
         self.worker.finished.connect(self.on_worker_finished)
         self.worker.start()
         
     def on_worker_finished(self, fig, error_msg, endmembers_df):
+        sender = self.sender()
+        if sender != self.worker:
+            sender.deleteLater()
+            return
+            
+        if endmembers_df is not None:
+            self.endmembers_df = endmembers_df
+        
         self.worker = None
         
         if error_msg:
             self.stack.setCurrentIndex(0)
             QMessageBox.critical(self, "Error", error_msg)
             return
-            
-        if endmembers_df is not None:
-            self.endmembers_df = endmembers_df
             
         if fig:
             self.plot_view.set_plot(fig)

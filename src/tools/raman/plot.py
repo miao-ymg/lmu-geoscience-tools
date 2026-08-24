@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
+from theme import colors
 
 def find_peaks(x, y, window_size=50, prominence_factor=3.0):
     """
@@ -41,17 +42,17 @@ def plot_raman(dfs_dict, dark_mode=False):
     dfs_dict: {filename: DataFrame}
     """
     if dark_mode:
-        bg_color = '#1e1e1e'
-        line_color = 'white'
-        text_color = 'white'
-        grid_color = '#444444'
-        base_accent = '#a6e3a1'
+        bg_color = colors['plot-bg-dark']
+        text_color = colors['plot-text-dark']
+        line_color = colors['plot-line-dark']
+        grid_color = colors['plot-grid-dark']
+        base_accent = colors['plot-accent-dark']
     else:
-        bg_color = 'white'
-        line_color = 'black'
-        text_color = 'black'
-        grid_color = '#dddddd'
-        base_accent = '#40a02b'
+        bg_color = colors['plot-bg-light']
+        text_color = colors['plot-text-light']
+        line_color = colors['plot-line-light']
+        grid_color = colors['plot-grid-light']
+        base_accent = colors['plot-accent-light']
         
     fig = plt.figure(figsize=(10, 6), facecolor=bg_color)
     ax = fig.add_subplot(111)
@@ -64,7 +65,7 @@ def plot_raman(dfs_dict, dark_mode=False):
     ax.tick_params(colors=text_color, which='both')
     
     # Use tab10 colormap for multiple lines, falling back to base_accent if only 1 file
-    colors = plt.get_cmap('tab10').colors
+    line_colors = plt.get_cmap('tab10').colors
     
     min_x, max_x = float('inf'), float('-inf')
     
@@ -77,7 +78,7 @@ def plot_raman(dfs_dict, dark_mode=False):
     
     # Process each file
     for idx, (filename, df) in enumerate(dfs_dict.items()):
-        color = base_accent if len(dfs_dict) == 1 else colors[idx % len(colors)]
+        color = base_accent if len(dfs_dict) == 1 else line_colors[idx % len(line_colors)]
         
         # Plot the data
         ax.plot(df['Raman Shift'], df['Intensity'], color=color, linewidth=1.5, label=filename)

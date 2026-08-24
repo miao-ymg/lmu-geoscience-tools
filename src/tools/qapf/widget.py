@@ -17,8 +17,8 @@ from gui.components.plot_view import BasePlotView
 class PlotWorker(QThread):
     finished = pyqtSignal(object, str, object, str)  # fig, error_msg, normalized_df, mode
     
-    def __init__(self, normalized_df, mode, highlight, classification):
-        super().__init__()
+    def __init__(self, normalized_df, mode, highlight, classification, parent=None):
+        super().__init__(parent)
         self.normalized_df = normalized_df
         self.mode = mode
         self.highlight = highlight
@@ -91,7 +91,6 @@ class QapfWidget(QWidget):
         self.current_mode = 'QAPF'
         
         self.worker = None
-        self.old_workers = []
         
     def show_upload(self):
         self.upload_view.reset()
@@ -139,21 +138,20 @@ class QapfWidget(QWidget):
             
     def start_worker(self, normalized_df, show_loading=True):
         if self.worker is not None and self.worker.isRunning():
-            self.old_workers.append(self.worker)
+            self.worker.finished.disconnect(self.on_worker_finished)
+            self.worker.finished.connect(self.worker.deleteLater)
             
         if show_loading:
             self.stack.setCurrentIndex(2) # Show loading screen
         self.worker = PlotWorker(normalized_df, self.current_mode, 
-                                 self.current_highlight, self.current_classification)
+                                 self.current_highlight, self.current_classification, parent=self)
         self.worker.finished.connect(self.on_worker_finished)
         self.worker.start()
         
     def on_worker_finished(self, fig, error_msg, normalized_df, mode):
         sender = self.sender()
         if sender != self.worker:
-            if hasattr(self, 'old_workers') and sender in self.old_workers:
-                sender.deleteLater()
-                self.old_workers.remove(sender)
+            sender.deleteLater()
             return
             
         self.worker = None

@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import sys
 import yaml
+from theme import colors
 from tools.common.plot_utils import (
     setup_ternary_bounds, draw_ternary_outline, draw_ternary_grid,
     draw_classifications_legend, draw_sample_points
@@ -45,19 +46,21 @@ def plot_feldspar(endmembers_df=None, dark_mode=True):
     
     # Configure colors based on mode
     if dark_mode:
-        bg_color    = '#1e1e1e'
-        text_color  = '#e0e0e0'
-        line_color  = '#e0e0e0'
-        grid_color  = '#333333'
-        point_color = 'orange'
-        edge_color  = 'black'
+        bg_color    = colors['plot-feldspar-bg-dark']
+        text_color  = colors['plot-text-dark']
+        line_color  = colors['plot-line-dark']
+        grid_color  = colors['plot-grid-dark']
+        fig_bg_color = colors['plot-bg-dark']
+        point_color = colors['plot-point-dark']
+        edge_color  = colors['plot-edge-dark']
     else:
-        bg_color    = 'white'
-        text_color  = 'black'
-        line_color  = 'black'
-        grid_color  = '#dddddd'
-        point_color = 'orange'
-        edge_color  = 'black'
+        bg_color    = colors['plot-feldspar-bg-light']
+        text_color  = colors['plot-text-light']
+        line_color  = colors['plot-line-light']
+        grid_color  = colors['plot-grid-light']
+        fig_bg_color = colors['plot-bg-light']
+        point_color = colors['plot-point-light']
+        edge_color  = colors['plot-edge-light']
 
     # Read classifications
     all_classifications = get_classifications()
@@ -65,7 +68,7 @@ def plot_feldspar(endmembers_df=None, dark_mode=True):
 
     # Increase width to make room for legend
     fig_width = 11 if class_dict else 8
-    fig = plt.figure(figsize=(fig_width, 6.5), facecolor=bg_color)
+    fig = plt.figure(figsize=(fig_width, 6.5), facecolor=fig_bg_color)
     
     if class_dict:
         # Center the combined bounding box of (triangle + legend)
@@ -74,7 +77,7 @@ def plot_feldspar(endmembers_df=None, dark_mode=True):
     else:
         ax = fig.add_axes([0.1, 0.05, 0.8, 0.90])
         
-    ax.set_facecolor(bg_color)
+    ax.set_facecolor(fig_bg_color)
     ax.axis('off')
     
     setup_ternary_bounds(ax, scale=1.0)

@@ -14,12 +14,12 @@ from .data import load_and_validate_data, normalize_tas
 from .plot import plot_tas
 
 class PlotWorker(QThread):
-    finished = pyqtSignal(object, str, object)  # fig, error_msg, normalized_df
+    finished = pyqtSignal(object, str, object, str)  # fig, error_msg, normalized_df, rock_type
     
-    def __init__(self, normalized_df, classification):
-        super().__init__()
+    def __init__(self, normalized_df, rock_type, parent=None):
+        super().__init__(parent)
         self.normalized_df = normalized_df
-        self.classification = classification
+        self.classification = rock_type
         
     def run(self):
         error_msg = None
@@ -30,7 +30,7 @@ class PlotWorker(QThread):
         except Exception as e:
             error_msg = f"An error occurred: {str(e)}"
             
-        self.finished.emit(fig, error_msg, self.normalized_df)
+        self.finished.emit(fig, error_msg, self.normalized_df, self.classification)
 
 class PlotView(BasePlotView):
     def __init__(self, on_new_sample, on_download, on_classification_changed):
@@ -72,7 +72,6 @@ class TasWidget(QWidget):
         self.current_classification = 'Volcanites'
         
         self.worker = None
-        self.old_workers = []
         
     def show_upload(self):
         self.upload_view.reset()
@@ -108,20 +107,19 @@ class TasWidget(QWidget):
             
     def start_worker(self, normalized_df, show_loading=True):
         if self.worker is not None and self.worker.isRunning():
-            self.old_workers.append(self.worker)
+            self.worker.finished.disconnect(self.on_worker_finished)
+            self.worker.finished.connect(self.worker.deleteLater)
             
         if show_loading:
             self.stack.setCurrentIndex(2) # Show loading screen
-        self.worker = PlotWorker(normalized_df, self.current_classification)
+        self.worker = PlotWorker(normalized_df, self.current_classification, parent=self)
         self.worker.finished.connect(self.on_worker_finished)
         self.worker.start()
         
-    def on_worker_finished(self, fig, error_msg, normalized_df):
+    def on_worker_finished(self, fig, error_msg, normalized_df, rock_type):
         sender = self.sender()
         if sender != self.worker:
-            if hasattr(self, 'old_workers') and sender in self.old_workers:
-                sender.deleteLater()
-                self.old_workers.remove(sender)
+            sender.deleteLater()
             return
             
         self.worker = None

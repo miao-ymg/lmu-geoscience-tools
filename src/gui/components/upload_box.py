@@ -1,7 +1,98 @@
 import os
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog, QFrame
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QDragEnterEvent, QDropEvent
+import sys
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog, QFrame, QGraphicsColorizeEffect
+from PyQt6.QtCore import Qt, QVariantAnimation
+from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QPixmap, QPainter, QColor, QIcon
+from theme import colors
+from gui.components.action_button import ActionButton
+
+class UploadIconBadge(QLabel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(48, 48)
+        icon_path = resource_path(os.path.join("resources", "icons", "upload.svg"))
+        self.icon_pixmap = QIcon(icon_path).pixmap(24, 24)
+        
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # Background circle
+        painter.setBrush(QColor(colors["bg-upload-icon"]))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawEllipse(self.rect())
+        
+        # Center the SVG pixmap accounting for High DPI
+        pr = self.icon_pixmap.devicePixelRatio()
+        pw = self.icon_pixmap.width() / pr
+        ph = self.icon_pixmap.height() / pr
+        x = int((self.width() - pw) / 2)
+        y = int((self.height() - ph) / 2)
+        painter.drawPixmap(x, y, self.icon_pixmap)
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+class AnimatedDropArea(QFrame):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.hover_opacity = 0.0
+        self.anim = QVariantAnimation(self)
+        self.anim.setDuration(150)
+        self.anim.valueChanged.connect(self.set_hover_opacity)
+        self.setMouseTracking(True)
+        self.setStyleSheet("background: transparent; border: none;")
+        
+    def set_hover_opacity(self, val):
+        self.hover_opacity = val
+        self.update()
+        
+    def enterEvent(self, event):
+        self.anim.stop()
+        self.anim.setStartValue(self.hover_opacity)
+        self.anim.setEndValue(1.0)
+        self.anim.start()
+        super().enterEvent(event)
+        
+    def leaveEvent(self, event):
+        self.anim.stop()
+        self.anim.setStartValue(self.hover_opacity)
+        self.anim.setEndValue(0.0)
+        self.anim.start()
+        super().leaveEvent(event)
+        
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        bg_base = QColor(colors["bg-upload"])
+        bg_hover = QColor(colors["bg-upload-hover"])
+        r = int(bg_base.red() + (bg_hover.red() - bg_base.red()) * self.hover_opacity)
+        g = int(bg_base.green() + (bg_hover.green() - bg_base.green()) * self.hover_opacity)
+        b = int(bg_base.blue() + (bg_hover.blue() - bg_base.blue()) * self.hover_opacity)
+        
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(r, g, b))
+        painter.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 12, 12)
+        
+        border_base = QColor(colors["border-upload"])
+        border_hover = QColor(colors["border-upload-hover"])
+        br = int(border_base.red() + (border_hover.red() - border_base.red()) * self.hover_opacity)
+        bg_g = int(border_base.green() + (border_hover.green() - border_base.green()) * self.hover_opacity)
+        bb = int(border_base.blue() + (border_hover.blue() - border_base.blue()) * self.hover_opacity)
+        
+        pen = painter.pen()
+        pen.setColor(QColor(br, bg_g, bb))
+        pen.setWidth(2)
+        pen.setStyle(Qt.PenStyle.DashLine)
+        painter.setPen(pen)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 12, 12)
+        painter.end()
 
 class UploadBox(QWidget):
     def __init__(self, on_file_selected, on_generate_clicked,
@@ -22,7 +113,7 @@ class UploadBox(QWidget):
         self.layout.setSpacing(28)
         
         # --- File selection area (Upper Dashed Box) ---
-        self.drop_area = QFrame()
+        self.drop_area = AnimatedDropArea()
         self.drop_area.setObjectName("UploadDropArea")
         self.drop_area.setCursor(Qt.CursorShape.PointingHandCursor)
         self.drop_area_layout = QVBoxLayout(self.drop_area)
@@ -30,10 +121,8 @@ class UploadBox(QWidget):
         self.drop_area_layout.setSpacing(10)
         self.drop_area.mousePressEvent = self.open_file_dialog
         
-        # File upload icon badge
-        self.icon_badge = QLabel("📄")
-        self.icon_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.icon_badge.setObjectName("UploadIconBadge")
+        # File upload icon badge (manually paints circle and SVG)
+        self.icon_badge = UploadIconBadge()
         self.drop_area_layout.addWidget(self.icon_badge, alignment=Qt.AlignmentFlag.AlignCenter)
         
         self.drop_title_label = QLabel(f"Drag & Drop your {self.drop_title} file here")
@@ -88,7 +177,7 @@ class UploadBox(QWidget):
             self.layout.addWidget(self.instructions_box)
         
         # --- Bottom Generate Plot Button (Green Bar) ---
-        self.generate_btn = QPushButton("Generate Plot")
+        self.generate_btn = ActionButton("Generate Plot", style_type="primary", font_size=15, font_weight=700)
         self.generate_btn.setEnabled(False)
         self.generate_btn.setObjectName("UploadGenerateBtn")
         self.generate_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -122,9 +211,9 @@ class UploadBox(QWidget):
             
         if len(self.current_file_paths) == 1:
             filename = os.path.basename(self.current_file_paths[0])
-            self.drop_title_label.setText(f"Selected: {filename}")
+            self.drop_title_label.setText(f"Selected: <span style='font-weight: 700; color: {colors['text-accent']};'>{filename}</span>")
         else:
-            self.drop_title_label.setText(f"Selected: {len(self.current_file_paths)} files")
+            self.drop_title_label.setText(f"Selected: <span style='font-weight: 700; color: {colors['text-accent']};'>{len(self.current_file_paths)} files</span>")
             
         self.drop_title_label.setProperty("selected", True)
         self.drop_title_label.style().unpolish(self.drop_title_label)

@@ -1,22 +1,23 @@
 import matplotlib.pyplot as plt
+import pyrolite.plot
+from theme import colors
 from tools.common.plot_utils import draw_sample_points
 
 def plot_tas(normalized_df, dark_mode=False, rock_type='Volcanites'):
-    """
-    Generates a matplotlib Figure for the TAS diagram using pyrolite.
-    """
     if dark_mode:
-        bg_color = '#1e1e1e' # Pure neutral dark grey
-        line_color = '#e0e0e0'
-        text_color = '#e0e0e0'
-        point_color = 'orange' 
-        edge_color = '#1e1e1e'
+        text_color = colors['plot-text-dark']
+        line_color = colors['plot-line-dark']
+        bg_color = colors['plot-bg-dark']
+        point_color = colors['plot-point-dark']
+        edge_color = colors['plot-edge-dark']
     else:
-        bg_color = 'white'
-        line_color = 'black'
-        text_color = 'black'
-        point_color = 'orange'
-        edge_color = 'black'
+        bg_color = colors['plot-bg-light']
+        text_color = colors['plot-text-light']
+        line_color = colors['plot-line-light']
+        point_color = colors['plot-point-light']
+        edge_color = colors['plot-edge-light']
+
+    class_line_color = '#5a6270' if dark_mode else colors['plot-line-light']
 
     fig, ax = plt.subplots(figsize=(10, 7), facecolor=bg_color)
     ax.set_facecolor(bg_color)
@@ -24,7 +25,7 @@ def plot_tas(normalized_df, dark_mode=False, rock_type='Volcanites'):
     # Use pyrolite's TAS template. Imported locally to avoid GUI freezing on startup.
     from pyrolite.plot.templates import TAS
     which_labels = 'volcanic' if rock_type == 'Volcanites' else 'intrusive'
-    ax = TAS(ax=ax, add_labels=True, which_labels=which_labels, fontsize=8, linewidth=1.0, color=line_color)
+    ax = TAS(ax=ax, add_labels=True, which_labels=which_labels, fontsize=8, linewidth=1.0, color=class_line_color)
     
     # Update label text colors
     for t in ax.texts:
@@ -32,7 +33,7 @@ def plot_tas(normalized_df, dark_mode=False, rock_type='Volcanites'):
         
     # Update patch edge colors for classification lines
     for p in ax.patches:
-        p.set_edgecolor(line_color)
+        p.set_edgecolor(class_line_color)
     
     # Since pyrolite's TAS might use its own colors for lines and text, we can override if needed, 
     # but the simplest is to just apply our text color to spines and ticks

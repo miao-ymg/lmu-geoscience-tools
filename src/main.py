@@ -7,6 +7,8 @@ matplotlib.use('Agg')
 from PyQt6.QtWidgets import QApplication
 from gui.main_window import MainWindow
 
+from theme import COLORS
+
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
@@ -23,8 +25,9 @@ def load_stylesheet(style_path):
         with open(style_path, "r") as f:
             content = f.read()
             
-            # Find all definitions like `@var-name: #hexcode;`
-            variables = re.findall(r'(@[\w-]+):\s*([^;]+);', content)
+            # Sort variables by length descending to prevent partial replacement
+            # (e.g. replacing @toggle-bg inside @toggle-bg-hover)
+            variables = sorted(COLORS.items(), key=lambda x: len(x[0]), reverse=True)
             
             # Replace all occurrences of the variables in the rest of the file
             for var_name, var_value in variables:

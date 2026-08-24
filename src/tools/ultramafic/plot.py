@@ -13,6 +13,8 @@ from tools.common.plot_utils import (
     draw_classifications_legend, draw_sample_points
 )
 
+from theme import colors
+
 import sys
 
 def _get_resource_path(filename):
@@ -59,9 +61,16 @@ def plot_ultramafic(normalized_df=None, dark_mode=True):
     fig = Figure(figsize=(11, 6.5), dpi=100)
     
     # Configure colors based on mode
-    bg_color = '#1e1e1e' if dark_mode else '#ffffff'
-    text_color = '#e0e0e0' if dark_mode else '#000000'
-    grid_color = '#333333' if dark_mode else '#cccccc'
+    if dark_mode:
+        bg_color = colors['plot-bg-dark']
+        text_color = colors['plot-text-dark']
+        line_color = colors['plot-line-dark']
+        grid_color = colors['plot-grid-dark']
+    else:
+        bg_color = colors['plot-bg-light']
+        text_color = colors['plot-text-light']
+        line_color = colors['plot-line-light']
+        grid_color = colors['plot-grid-light']
     
     fig.patch.set_facecolor(bg_color)
     
@@ -145,16 +154,16 @@ def plot_ultramafic(normalized_df=None, dark_mode=True):
 
     # Replicate the exact colors used in QAPF
     cmap = matplotlib.colormaps.get_cmap('tab20') if hasattr(matplotlib, 'colormaps') else cm.get_cmap('tab20')
-    colors = [cmap(i % 20) for i in range(len(classifications))]
+    class_colors = [cmap(i % 20) for i in range(len(classifications))]
 
     # Draw polygons
     legend_handles = []
     
-    for (class_name, data), color in zip(classifications.items(), colors):
+    for (class_name, data), color in zip(classifications.items(), class_colors):
         cart_coords = get_polygon_vertices(data)
         
         if len(cart_coords) >= 3:
-            poly = mpatches.Polygon(cart_coords, facecolor=color, edgecolor=text_color, linewidth=1, alpha=0.4, zorder=1)
+            poly = mpatches.Polygon(cart_coords, facecolor=color, edgecolor=line_color, linewidth=1, alpha=0.4, zorder=1)
             ax.add_patch(poly)
             
             # Add to legend
@@ -166,7 +175,7 @@ def plot_ultramafic(normalized_df=None, dark_mode=True):
         ax, 
         labels=['Opx', 'Cpx', 'Ol'], 
         text_color=text_color, 
-        line_color=text_color, 
+        line_color=line_color, 
         scale=100.0
     )
     
@@ -183,6 +192,6 @@ def plot_ultramafic(normalized_df=None, dark_mode=True):
             x_cart.append(cx)
             y_cart.append(cy)
             
-        draw_sample_points(ax, x_cart, y_cart, point_color='orange', edge_color='black')
+        draw_sample_points(ax, x_cart, y_cart, point_color=colors['plot-point-dark'] if dark_mode else colors['plot-point-light'], edge_color=colors['plot-edge-dark'] if dark_mode else colors['plot-edge-light'])
         
     return fig

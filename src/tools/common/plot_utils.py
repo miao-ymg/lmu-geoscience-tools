@@ -89,13 +89,13 @@ def draw_ternary_grid(ax, grid_color, scale=1.0, vertices=None):
         p2 = top + frac * (right - top)
         ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=grid_color, linewidth=0.5, zorder=1)
 
-def draw_classifications_legend(ax, handles, text_color):
+def draw_classifications_legend(ax, handles, text_color, ncols=1):
     """Standardized side-legend for colored classification plots."""
     if handles:
-        ax.legend(handles=handles, loc='center left', bbox_to_anchor=(1.05, 0.5), 
-                  frameon=False, fontsize=10, labelcolor=text_color)
+        ax.legend(handles=handles, loc='center left', bbox_to_anchor=(1.15, 0.5), 
+                  frameon=False, fontsize=9, labelcolor=text_color, ncol=ncols)
 
 def draw_sample_points(ax, xs, ys, point_color='orange', edge_color='black'):
     """Standardized scatter plot styling for samples."""
     ax.scatter(xs, ys, color=point_color, s=100, edgecolors=edge_color, 
-               linewidths=1, zorder=5, alpha=1.0, marker='o')
+               linewidths=1.5, zorder=5, alpha=1.0, marker='o')

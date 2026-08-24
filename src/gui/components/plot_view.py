@@ -1,8 +1,10 @@
 import os
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-    QLabel, QFileDialog, QMessageBox
+    QWidget, QVBoxLayout, QHBoxLayout,
+    QLabel, QFileDialog, QMessageBox,
+    QStackedWidget, QSplitter
 )
+from gui.components.action_button import ActionButton
 from PyQt6.QtCore import Qt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 
@@ -15,17 +17,18 @@ class BasePlotView(QWidget):
         super().__init__(parent)
         
         self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(28)
         
         # 1. Top layout for optional tool-specific controls (e.g. QAPF/TAS toggles)
         self.top_container = QWidget()
-        self.top_container.setFixedHeight(64)
         self.top_layout = QHBoxLayout(self.top_container)
         self.top_layout.setContentsMargins(0, 0, 0, 0)
         self.layout.addWidget(self.top_container)
         
         # 2. Main canvas area
-        self.canvas_layout = QVBoxLayout()
-        self.layout.addLayout(self.canvas_layout, stretch=1)
+        self.canvas_container = QStackedWidget()
+        self.layout.addWidget(self.canvas_container, stretch=1)
         
         # 3. Optional note space below canvas
         self.note_label = QLabel(" ")
@@ -38,12 +41,13 @@ class BasePlotView(QWidget):
         
         # 4. Standard bottom buttons
         self.btn_layout = QHBoxLayout()
+        self.btn_layout.setSpacing(10)
         
-        self.download_btn = QPushButton("Download Image")
+        self.download_btn = ActionButton("Download Image", style_type="primary")
         self.download_btn.setObjectName("PlotDownloadBtn")
         self.btn_layout.addWidget(self.download_btn)
         
-        self.new_sample_btn = QPushButton("New sample")
+        self.new_sample_btn = ActionButton("New sample", style_type="secondary")
         self.new_sample_btn.setObjectName("PlotNewSampleBtn")
         self.new_sample_btn.clicked.connect(on_new_sample)
         self.btn_layout.addWidget(self.new_sample_btn)
@@ -68,14 +72,16 @@ class BasePlotView(QWidget):
     def set_plot(self, fig):
         """Embeds the generated matplotlib Figure into the UI."""
         self.current_fig = fig
-        for i in reversed(range(self.canvas_layout.count())):
-            w = self.canvas_layout.itemAt(i).widget()
-            if w:
-                w.setParent(None)
-                
+        old_canvas = getattr(self, 'canvas', None)
+        
         self.canvas = FigureCanvas(fig)
         self.canvas.setObjectName("PlotCanvas")
-        self.canvas_layout.addWidget(self.canvas)
+        self.canvas_container.addWidget(self.canvas)
+        self.canvas_container.setCurrentWidget(self.canvas)
+        
+        if old_canvas:
+            self.canvas_container.removeWidget(old_canvas)
+            old_canvas.deleteLater()
         
     def handle_download(self, parent_widget, generate_light_fig_func, default_filename):
         """

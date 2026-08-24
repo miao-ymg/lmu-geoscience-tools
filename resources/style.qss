@@ -1,20 +1,4 @@
-/*
-=== THEME VARIABLES ===
-@bg-base: #161B22;
-@bg-mantle: #0D1117;
-@bg-hover: #1b222d;
-@bg-active: #223026;
-@border-active: #3e5a42;
-@text-main: #f0f3f6;
-@text-serif: #f0f3f6;
-@text-sub: #788390;
-@text-dim: #717d8a;
-@text-green: #52795d;
-@accent-green: #4d7a58;
-@border-dark: #21262d;
-@border-subtle: #30363d;
-=======================
-*/
+/* style.qss - Theme variables are now injected from src/theme.py */
 
 /* Global Font Settings */
 * {
@@ -43,7 +27,7 @@ QLabel#AppTitle {
     font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
     font-size: 19px;
     font-weight: 600;
-    color: #ffffff;
+    color: @text-white;
     padding: 0px;
     margin: 0px;
 }
@@ -52,7 +36,7 @@ QLabel#AppSubtitle {
     font-family: "IBM Plex Sans", sans-serif;
     font-size: 11px;
     letter-spacing: 0.5px;
-    color: #8ce637;
+    color: @text-accent;
     padding: 0px;
     margin: 0px;
 }
@@ -61,9 +45,8 @@ QLabel#AppSubtitle {
 QLabel#SidebarSectionHeader {
     font-family: "IBM Plex Sans", sans-serif;
     font-size: 11.5px;
-    font-weight: 700;
     letter-spacing: 0.5px;
-    color: #5d6e7f;
+    color: @text-sidebar-header;
     padding-left: 20px;
     padding-right: 20px;
     padding-top: 18px;
@@ -80,7 +63,7 @@ QLabel#FeatureTitle {
     font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
     font-size: 36px;
     font-weight: 600;
-    color: #ffffff;
+    color: @text-white;
     padding: 0px;
     margin: 0px;
 }
@@ -164,7 +147,7 @@ QLabel#DashboardTitle {
     font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
     font-size: 46px;
     font-weight: 600;
-    color: #ffffff;
+    color: @text-white;
     margin-bottom: 12px;
     background-color: transparent;
 }
@@ -173,7 +156,7 @@ QLabel#DashboardSubtitle {
     font-family: "IBM Plex Sans", sans-serif;
     font-size: 16px;
     font-weight: 400;
-    color: #8c9baa;
+    color: @text-instruction-note;
     background-color: transparent;
 }
 
@@ -182,11 +165,11 @@ QLabel#HomeImageCredit {
     font-family: "IBM Plex Sans", sans-serif;
 }
 QLabel#HomeImageCredit a {
-    color: #627284;
+    color: @text-link;
     text-decoration: none;
 }
 QLabel#HomeImageCredit a:hover {
-    color: #8ce637;
+    color: @text-accent;
 }
 
 /* --- Refactored Widget Styles --- */
@@ -195,78 +178,76 @@ QLabel#HomeImageCredit a:hover {
 QLabel#ToggleGroupLabel {
     color: @text-main;
     font-weight: 600;
-    font-size: 13px;
-    margin-bottom: 5px;
+    font-size: 17px;
+    font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    margin-bottom: 2px;
 }
 QPushButton#ToggleBtn {
-    background-color: #1a222c;
-    color: @text-sub;
-    border: 1px solid #273140;
+    background-color: #273140;
+    color: #a0aab5;
+    border: none;
     padding: 8px 16px;
     border-radius: 6px;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 15px;
 }
 QPushButton#ToggleBtn:hover {
-    background-color: #232d3b;
+    background-color: #3a4a5e;
     color: @text-main;
 }
 QPushButton#ToggleBtn:checked {
-    background-color: #26382b;
-    color: #c9e8cd;
-    border: 1px solid #4a6e50;
+    background-color: #467552;
+    color: @toggle-text-checked;
+    border: none;
 }
 
 /* UploadBox */
 QFrame#UploadDropArea {
     border: 2px dashed #4e7330;
     border-radius: 12px;
-    background-color: #1C212B;
+    background-color: @bg-upload;
     padding: 30px;
 }
 QFrame#UploadDropArea:hover {
-    border-color: #72a34f;
-    background-color: #222834;
+    border-color: @border-upload-hover;
+    background-color: @bg-upload-hover;
 }
 QLabel#UploadIconBadge {
-    background-color: #232f22;
+    background-color: @bg-upload-icon;
     border-radius: 28px;
-    padding: 14px 18px;
+    padding: 0px;
     font-size: 24px;
-    color: #8ce637;
+    color: @text-accent;
 }
 QLabel#UploadDropTitle {
     font-size: 16.5px;
-    font-weight: 700;
-    color: #ffffff;
+    font-weight: 500;
+    color: @text-white;
     background-color: transparent;
-}
-QLabel#UploadDropTitle[selected="true"] {
-    color: #8ce637;
 }
 QLabel#UploadDropSubtitle {
     font-size: 13.5px;
-    color: #788796;
+    color: @text-upload-subtitle;
     background-color: transparent;
 }
 QFrame#InstructionsBox {
-    background-color: #1C212B;
+    background-color: @bg-upload;
     border: 1px solid #28313e;
     border-radius: 10px;
     padding: 12px 16px;
 }
 QLabel#InstructionsIcon {
-    color: #8ce637;
+    color: @text-accent;
     font-weight: bold;
     font-size: 19px;
 }
 QLabel#InstructionsHeader {
-    color: #cad3df;
+    color: @text-instruction-header;
     font-size: 15px;
     background-color: transparent;
 }
 QLabel#InstructionsBullet {
-    color: #cad3df;
+    color: @text-instruction-header;
     font-size: 14px;
     margin-top: 3px;
     margin-bottom: 3px;
@@ -277,56 +258,56 @@ QLabel#InstructionsNote {
     margin-top: 14px;
     padding-top: 12px;
     font-style: italic;
-    color: #8c9baa;
+    color: @text-instruction-note;
     font-size: 13.5px;
     background-color: transparent;
 }
 QPushButton#UploadGenerateBtn {
-    background-color: #8ce637;
-    color: #0b1008;
+    background-color: @btn-primary;
+    color: @text-white;
     font-family: "IBM Plex Sans", sans-serif;
     font-size: 15px;
     font-weight: 700;
     padding: 15px;
     border-radius: 8px;
-    border: none;
+    border: 1px solid #4d7a58;
 }
 QPushButton#UploadGenerateBtn:hover {
-    background-color: #9ef04d;
+    background-color: @btn-primary-hover;
 }
 QPushButton#UploadGenerateBtn:disabled {
-    background-color: #182218;
-    color: #435b44;
+    background-color: @bg-btn-disabled;
+    color: @text-btn-disabled;
     border: 1px solid #223323;
 }
 
 /* PlotView */
 QLabel#PlotNoteLabel {
-    color: #d19a66;
+    color: @text-warning;
     font-style: italic;
     font-size: 13px;
 }
 QPushButton#PlotDownloadBtn, QPushButton#PlotNewSampleBtn {
     font-size: 14px;
     font-weight: 600;
-    padding: 10px 18px;
-    border-radius: 6px;
+    padding: 15px;
+    border-radius: 8px;
 }
 QPushButton#PlotDownloadBtn {
-    background-color: #3b6345;
-    color: #ffffff;
+    background-color: @btn-primary;
+    color: @text-white;
     border: 1px solid #4d7a58;
 }
 QPushButton#PlotDownloadBtn:hover {
-    background-color: #467552;
+    background-color: @btn-primary-hover;
 }
 QPushButton#PlotNewSampleBtn {
-    background-color: #1b232e;
+    background-color: @btn-secondary;
     color: @text-main;
     border: 1px solid #2a3647;
 }
 QPushButton#PlotNewSampleBtn:hover {
-    background-color: #253040;
+    background-color: @btn-secondary-hover;
 }
 QWidget#PlotCanvas {
     background-color: transparent;
@@ -335,7 +316,7 @@ QWidget#PlotCanvas {
 /* Loading Overlays */
 QLabel#LoadingStartupTitle {
     font-family: "IBM Plex Serif", Georgia, serif;
-    color: #ffffff;
+    color: @text-white;
     font-size: 32px;
     font-weight: 600;
     margin-bottom: 20px;
@@ -345,7 +326,7 @@ QLabel#LoadingStartupStatus {
     font-size: 14px;
 }
 QLabel#LoadingPanelStatus {
-    color: #ffffff;
+    color: @text-white;
     font-size: 16px;
     font-weight: 600;
     margin-bottom: 10px;
