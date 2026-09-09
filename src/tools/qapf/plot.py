@@ -145,15 +145,9 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
         F = (0, 100 * sqrt3_2)
     
     # Draw internal grid lines BEFORE polygons so they sit in the background
-    if highlight_axis:
-        draw_grid(ax, default_color=grid_color, default_alpha=grid_alpha, 
+    if highlight_axis and highlight_axis != 'None':
+        draw_grid(ax, default_color=grid_color, default_alpha=0.0, 
                   accent_color=accent_color, highlight_axis=highlight_axis, mode=mode)
-    else:
-        from tools.common.plot_utils import draw_ternary_grid
-        if mode in ['QAPF', 'QAP']:
-            draw_ternary_grid(ax, grid_color, scale=1.0, vertices=(np.array(A), np.array(P), np.array(Q)))
-        if mode in ['QAPF', 'APF']:
-            draw_ternary_grid(ax, grid_color, scale=1.0, vertices=(np.array(A), np.array(P), np.array(F)))
             
     # Draw classification polygons
     if classification and classification != 'None':
@@ -161,17 +155,10 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
         if classification in all_classifications:
             class_dict = all_classifications[classification]
             
-            # Get a colormap for the classes
-            try:
-                cmap = plt.colormaps.get_cmap('tab20')
-            except AttributeError:
-                import matplotlib.cm as cm
-                cmap = cm.get_cmap('tab20')
-                
-            class_colors = [cmap(i % 20) for i in range(len(class_dict))]
             legend_handles = []
+            from matplotlib.lines import Line2D
             
-            for (name, data), color in zip(class_dict.items(), class_colors):
+            for i, (name, data) in enumerate(class_dict.items(), 1):
                 c_type = 'QAP' if 'Q' in data else 'APF'
                 if mode == 'QAP' and c_type != 'QAP': continue
                 if mode == 'APF' and c_type != 'APF': continue
@@ -194,14 +181,23 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
                     v3 = ((100 - f_max) * (p_max - 0.5), y_sign * f_max * sqrt3_2)
                     v4 = ((100 - f_max) * (p_min - 0.5), y_sign * f_max * sqrt3_2)
                     
-                poly = patches.Polygon([v1, v2, v3, v4], facecolor=color, edgecolor=line_color, alpha=0.4, zorder=2)
+                poly = patches.Polygon([v1, v2, v3, v4], facecolor='none', edgecolor=line_color, alpha=0.3, zorder=2)
                 ax.add_patch(poly)
                 
-                patch = patches.Patch(color=color, alpha=0.4, label=name)
-                legend_handles.append(patch)
+                cx = (v1[0] + v2[0] + v3[0] + v4[0]) / 4.0
+                cy = (v1[1] + v2[1] + v3[1] + v4[1]) / 4.0
+                
+                # Offset somewhat if very close to the center line to avoid overlapping?
+                # Actually, average centroid works well for QAPF.
+                ax.text(cx, cy, str(i), color=text_color, fontsize=9, ha='center', va='center', fontweight='bold', zorder=4)
+                
+                handle = Line2D([0], [0], color='none', marker='', label=f"{i}. {name}")
+                legend_handles.append(handle)
             
             if legend_handles:
-                draw_classifications_legend(ax, legend_handles, text_color, ncols=2 if mode == 'QAPF' else 1)
+                ax.legend(handles=legend_handles, loc='center left', bbox_to_anchor=(1.10, 0.5), 
+                          frameon=False, fontsize=9, labelcolor=text_color, ncol=2 if mode == 'QAPF' else 1,
+                          handlelength=0, handletextpad=0)
     
 
     # Draw the outline of the two triangles
