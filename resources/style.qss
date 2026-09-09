@@ -64,8 +64,17 @@ QLabel#FeatureTitle {
     font-size: 36px;
     font-weight: 600;
     color: @text-white;
-    padding: 0px;
-    margin: 0px;
+}
+
+QLabel#FeatureTitle[hasLink="true"] {
+    background-image: url(resources/icons/external-link.svg);
+    background-position: right center;
+    background-repeat: no-repeat;
+    padding-right: 36px;
+}
+
+QLabel#FeatureTitle[hasLink="true"]:hover {
+    text-decoration: underline;
 }
 
 /* Sidebar Tree Widget */

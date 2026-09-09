@@ -3,7 +3,7 @@ import sys
 import threading
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, 
-    QLabel, QTreeWidget, QTreeWidgetItem, QStackedWidget
+    QLabel, QTreeWidget, QTreeWidgetItem, QStackedWidget, QPushButton
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 
@@ -270,15 +270,39 @@ class MainWindow(QMainWindow):
             content_layout.setContentsMargins(40, 36, 40, 36)
             content_layout.setSpacing(28)
             
+            from utils.urls import TOOL_URLS
+            url = TOOL_URLS.get(tool_name, "")
+            
             # Add title at the top left
-            content_label = QLabel(content_text)
-            content_label.setObjectName("FeatureTitle")
-            font = content_label.font()
-            font.setPointSize(36)
-            font.setBold(True)
-            content_label.setFont(font)
-            content_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-            content_layout.addWidget(content_label)
+            class ClickableTitleLabel(QLabel):
+                def __init__(self, text, link, parent=None):
+                    super().__init__(text, parent)
+                    self.link = link
+                    self.setObjectName("FeatureTitle")
+                    
+                    font = self.font()
+                    font.setPointSize(36)
+                    font.setBold(True)
+                    self.setFont(font)
+                    
+                    if link:
+                        self.setCursor(Qt.CursorShape.PointingHandCursor)
+                        self.setToolTip(f"Open {link}")
+                        self.setProperty("hasLink", True)
+                        
+                def mousePressEvent(self, event):
+                    if self.link and event.button() == Qt.MouseButton.LeftButton:
+                        from PyQt6.QtGui import QDesktopServices
+                        from PyQt6.QtCore import QUrl
+                        QDesktopServices.openUrl(QUrl(self.link))
+                    super().mousePressEvent(event)
+                    
+            content_label = ClickableTitleLabel(content_text, url)
+            
+            title_layout = QHBoxLayout()
+            title_layout.addWidget(content_label)
+            title_layout.addStretch()
+            content_layout.addLayout(title_layout)
             
             # Add the actual tool widget
             if tool_name == "QAPF Diagrams":

@@ -29,6 +29,10 @@ def load_stylesheet(style_path):
             # (e.g. replacing @toggle-bg inside @toggle-bg-hover)
             variables = sorted(COLORS.items(), key=lambda x: len(x[0]), reverse=True)
             
+            # Replace resources paths for QSS url()
+            res_path = resource_path("resources").replace('\\', '/')
+            content = content.replace("url(resources/", f"url({res_path}/")
+            
             # Replace all occurrences of the variables in the rest of the file
             for var_name, var_value in variables:
                 content = content.replace(var_name, var_value.strip())
