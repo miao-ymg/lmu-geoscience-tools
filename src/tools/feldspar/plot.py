@@ -41,7 +41,7 @@ def _ternary_coords(ab, or_, an):
     return x, y
 
 
-def plot_feldspar(endmembers_df=None, dark_mode=True):
+def plot_feldspar(endmembers_df=None, dark_mode=True, classification='900° C'):
     import numpy as np
     
     # Configure colors based on mode
@@ -64,7 +64,9 @@ def plot_feldspar(endmembers_df=None, dark_mode=True):
 
     # Read classifications
     all_classifications = get_classifications()
-    class_dict = all_classifications.get('Default', {})
+    class_dict = {}
+    if classification == '900° C':
+        class_dict = all_classifications.get('Default', {})
 
     # Increase width to make room for legend
     fig_width = 11 if class_dict else 8
@@ -99,9 +101,7 @@ def plot_feldspar(endmembers_df=None, dark_mode=True):
     draw_ternary_grid(ax, grid_color=grid_color, scale=1.0)
 
     # ── Classifications Overlay ───────────────────────────────────────
-    # Read classifications
-    all_classifications = get_classifications()
-    class_dict = all_classifications.get('Default', {})
+    # We already populated class_dict above based on classification
     
     import math
 
@@ -240,10 +240,11 @@ def plot_feldspar(endmembers_df=None, dark_mode=True):
 
     sqrt3_2 = np.sqrt(3) / 2
     # Edge texts
-    # Ab-Or edge
-    ax.text(0.20, sqrt3_2/2 + 0.05, "Alkali Feldspars", color=text_color, fontsize=12, ha='center', va='center', rotation=60)
-    # Ab-An edge
-    ax.text(0.5, -0.05, "Plagioclases", color=text_color, fontsize=12, ha='center', va='top')
+    if class_dict:
+        # Ab-Or edge
+        ax.text(0.20, sqrt3_2/2 + 0.05, "Alkali Feldspars", color=text_color, fontsize=12, ha='center', va='center', rotation=60)
+        # Ab-An edge
+        ax.text(0.5, -0.05, "Plagioclases", color=text_color, fontsize=12, ha='center', va='top')
 
     # ── Data points ───────────────────────────────────────────────────
     if not endmembers_df.empty:

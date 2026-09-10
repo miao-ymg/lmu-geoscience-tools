@@ -16,25 +16,35 @@ from .plot import plot_feldspar
 class PlotWorker(QThread):
     finished = pyqtSignal(object, str, object)  # fig, error_msg, endmembers_df
     
-    def __init__(self, endmembers_df, parent=None):
+    def __init__(self, endmembers_df, classification, parent=None):
         super().__init__(parent)
         self.endmembers_df = endmembers_df
+        self.classification = classification
         
     def run(self):
         error_msg = None
         fig = None
         try:
             if self.endmembers_df is not None:
-                fig = plot_feldspar(self.endmembers_df, dark_mode=True)
+                fig = plot_feldspar(self.endmembers_df, dark_mode=True, classification=self.classification)
         except Exception as e:
             error_msg = f"An error occurred: {str(e)}"
             
         self.finished.emit(fig, error_msg, self.endmembers_df)
 
 
+from gui.components.toggle_group import ToggleGroup
+
 class PlotView(BasePlotView):
-    def __init__(self, on_new_sample, on_download):
+    def __init__(self, on_new_sample, on_download, on_classification_changed):
         super().__init__(on_new_sample)
+        
+        self.classification_toggle = ToggleGroup("Classification:", ['None', '900° C'], '900° C')
+        self.classification_toggle.selectionChanged.connect(on_classification_changed)
+        
+        self.add_top_widget(self.classification_toggle)
+        self.add_top_stretch()
+        
         self.download_btn.clicked.connect(on_download)
         self.set_note("Note: These classifications are only approximations and could therefore be inaccurate.")
 
@@ -51,7 +61,8 @@ class FeldsparWidget(QWidget):
         from utils.instructions import get_instructions_data
         instructions = get_instructions_data(instructions_path)
         self.upload_view = UploadBox(self.on_file_selected, self.on_generate_clicked, instructions=instructions)
-        self.plot_view = PlotView(self.show_upload, self.download_plot)
+        self.current_classification = '900° C'
+        self.plot_view = PlotView(self.show_upload, self.download_plot, self.on_classification_changed)
         self.loading_overlay = PanelOverlay()
 
         self.stack.addWidget(self.upload_view)   # Index 0
@@ -69,6 +80,10 @@ class FeldsparWidget(QWidget):
     def show_upload(self):
         self.upload_view.reset()
         self.stack.setCurrentIndex(0)
+
+    def on_classification_changed(self, new_classification):
+        self.current_classification = new_classification
+        self.refresh_plot()
 
     def on_file_selected(self, file_path):
         self.current_file_path = file_path
@@ -105,7 +120,7 @@ class FeldsparWidget(QWidget):
             
         if show_loading:
             self.stack.setCurrentIndex(2) # Show loading screen
-        self.worker = PlotWorker(endmembers_df, parent=self)
+        self.worker = PlotWorker(endmembers_df, classification=self.current_classification, parent=self)
         self.worker.finished.connect(self.on_worker_finished)
         self.worker.start()
         
@@ -132,6 +147,6 @@ class FeldsparWidget(QWidget):
     def download_plot(self):
         self.plot_view.handle_download(
             self,
-            lambda: plot_feldspar(self.endmembers_df, dark_mode=False),
+            lambda: plot_feldspar(self.endmembers_df, dark_mode=False, classification=self.current_classification),
             "feldspar_diagram.png"
         )
