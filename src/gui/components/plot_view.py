@@ -24,6 +24,7 @@ class BasePlotView(QWidget):
         self.top_container = QWidget()
         self.top_layout = QHBoxLayout(self.top_container)
         self.top_layout.setContentsMargins(0, 0, 0, 0)
+        self.top_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
         self.layout.addWidget(self.top_container)
         
         # 2. Main canvas area

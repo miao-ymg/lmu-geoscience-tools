@@ -1,10 +1,9 @@
 import os
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton, QFileDialog, 
-    QStackedWidget, QMessageBox, QHBoxLayout
+    QStackedWidget, QMessageBox, QHBoxLayout, QLabel
 )
-from PyQt6.QtCore import QThread, pyqtSignal
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from PyQt6.QtCore import QThread, pyqtSignal, Qt
 
 from gui.components.upload_box import UploadBox
 from gui.components.toggle_group import ToggleGroup
@@ -41,6 +40,14 @@ class PlotView(BasePlotView):
         
         self.add_top_widget(self.classification_toggle)
         self.add_top_stretch()
+        
+        paper_label = QLabel(
+            '<a href="https://doi.org/10.1016/0012-8252(94)90029-9" style="color: #90c527; text-decoration: underline; font-size: 13px; font-weight: 500;">Paper: Middlemost (1994)</a>'
+        )
+        paper_label.setOpenExternalLinks(True)
+        paper_label.setCursor(Qt.CursorShape.PointingHandCursor)
+        
+        self.add_top_widget(paper_label)
         
         self.download_btn.clicked.connect(on_download)
 
