@@ -2,39 +2,41 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 from theme import colors
+from scipy.signal import find_peaks as scipy_find_peaks, savgol_filter
 
-def find_peaks(x, y, window_size=50, prominence_factor=3.0):
+def find_peaks(x, y, window_size=50, prominence_factor=1.5):
     """
-    Finds extreme spikes (peaks) by comparing the signal to a local moving average.
+    Finds real Raman spectrum peaks while ignoring high-frequency noise spikes and broad background curves.
     """
-    peaks = []
-    if len(y) < window_size:
-        return peaks
+    if len(y) < 10:
+        return []
         
-    # Calculate a simple moving average to act as baseline
-    window = np.ones(window_size) / window_size
-    baseline = np.convolve(y, window, mode='same')
-    
-    # Calculate how much each point stands above the baseline
-    prominence = y - baseline
-    
-    # We only care about the middle part to avoid convolution edge artifacts
-    edge = window_size // 2
-    valid_prominence = prominence[edge:-edge]
-    
-    # Calculate threshold based on the variance of the prominence (noise level)
-    positive_prom = valid_prominence[valid_prominence > 0]
-    if len(positive_prom) == 0:
-        return peaks
+    # 1. Smooth signal with a light Savitzky-Golay filter to eliminate single-point noise spikes
+    wl = 9 if len(y) >= 9 else (len(y) if len(y) % 2 != 0 else len(y) - 1)
+    if wl >= 5:
+        y_smooth = savgol_filter(y, window_length=wl, polyorder=3)
+    else:
+        y_smooth = y
         
-    threshold = np.mean(positive_prom) + prominence_factor * np.std(positive_prom)
+    # 2. Estimate high-frequency noise standard deviation
+    noise_std = np.std(y - y_smooth)
     
-    # Find local maxima in the original signal that also exceed the prominence threshold
-    for i in range(edge, len(y) - edge):
-        if y[i] > y[i - 1] and y[i] > y[i + 1] and prominence[i] > threshold:
-            peaks.append((x[i], y[i]))
-            
-    return peaks
+    # 3. Dynamic prominence threshold: at least 6x noise level and at least 1.5% of total intensity range
+    signal_span = np.ptp(y)
+    min_prom = max(6.0 * noise_std, 0.015 * signal_span)
+    
+    # Minimum distance: ~20 cm-1
+    x_step = np.median(np.diff(x)) if len(x) > 1 else 1.0
+    min_dist_pts = max(3, int(20 / x_step)) if x_step > 0 else 5
+    
+    peaks_idx, _ = scipy_find_peaks(
+        y_smooth,
+        prominence=min_prom,
+        distance=min_dist_pts,
+        wlen=int(200 / x_step) if x_step > 0 else 50
+    )
+    
+    return [(x[i], y[i]) for i in peaks_idx]
 
 def plot_raman(dfs_dict, dark_mode=False):
     """
@@ -92,7 +94,7 @@ def plot_raman(dfs_dict, dark_mode=False):
         x_vals = df['Raman Shift'].values
         
         # Use our updated local-baseline peak finder
-        peaks = find_peaks(x_vals, y_vals, window_size=50, prominence_factor=4.0)
+        peaks = find_peaks(x_vals, y_vals, window_size=50, prominence_factor=1.5)
         
         # Optional: Filter out peaks that are too close to each other, taking the highest
         # (This avoids clumping of labels if a peak has noise)
