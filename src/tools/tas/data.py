@@ -1,5 +1,10 @@
 import pandas as pd
 
+MAJOR_OXIDES = {
+    'sio2', 'tio2', 'al2o3', 'fe2o3', 'feo', 'fe2o3t', 'feot', 
+    'mno', 'mgo', 'cao', 'na2o', 'k2o', 'p2o5', 'cr2o3', 'nio', 'so3'
+}
+
 def load_and_validate_data(file_path):
     """Loads and validates TAS data from Excel or CSV."""
     try:
@@ -15,7 +20,7 @@ def load_and_validate_data(file_path):
     # Find the header row by searching for 'SiO2' (case-insensitive)
     header_idx = -1
     for idx, row in df.iterrows():
-        if any('sio2' == str(val).strip().lower() for val in row):
+        if any('sio2' in str(val).strip().lower() for val in row):
             header_idx = idx
             break
             
@@ -23,7 +28,13 @@ def load_and_validate_data(file_path):
         return None, "Could not find a 'SiO2' column in the file. Is it missing?"
         
     # Assign columns
-    df.columns = [str(c).strip().lower() for c in df.iloc[header_idx]]
+    raw_cols = [str(c).strip().lower() for c in df.iloc[header_idx]]
+    cleaned_cols = []
+    for c in raw_cols:
+        # Extract base oxide name if formatted like 'sio2 (wt%)'
+        base = c.split()[0].split('(')[0].split('[')[0].strip()
+        cleaned_cols.append(base if base in MAJOR_OXIDES or base in ['loi', 'total', 'sum', 'sample'] else c)
+    df.columns = cleaned_cols
     
     # Drop the header row and any rows before it
     df = df.iloc[header_idx + 1:].reset_index(drop=True)
@@ -46,27 +57,27 @@ def load_and_validate_data(file_path):
 
 def normalize_tas(df):
     """
-    For each row, drops LOI and the precomputed sum (if present), then normalizes all remaining values to 100%,
-    and returns a DataFrame with SiO2 and Total_Alkali.
+    For each row, normalizes major element oxides to 100% (excluding LOI, total sums, and trace elements),
+    and returns a DataFrame with SiO2 and Total_Alkali (Na2O + K2O).
     """
     normalized_data = []
     
     for _, row in df.iterrows():
         row_vals = {}
         for col, val in row.items():
-            if not col or col in ['nan', 'none', 'sum', 'summe', 'total'] or col == 'loi' or 'unnamed' in col:
+            col_clean = str(col).strip().lower().split()[0].split('(')[0].split('[')[0]
+            # Only consider known major oxide columns for major element normalization
+            if col_clean not in MAJOR_OXIDES:
                 continue
             try:
                 num_val = float(val)
-                # Ensure we only keep positive valid numbers
                 if pd.isna(num_val):
                     num_val = 0.0
-                row_vals[col] = num_val
+                row_vals[col_clean] = num_val
             except (ValueError, TypeError):
-                # Non-numeric columns (like Sample ID) are ignored
                 pass
                 
-        # Sum of all valid numeric values except LOI
+        # Sum of all valid major numeric oxide values
         total = sum(row_vals.values())
         
         if total == 0:

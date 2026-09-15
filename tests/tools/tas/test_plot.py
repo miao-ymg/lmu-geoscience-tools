@@ -15,7 +15,11 @@ def test_plot_tas_dark_mode():
     assert len(fig.axes) > 0
     
     # Check background color
+<<<<<<< Updated upstream
     assert fig.get_facecolor() in [(0.0, 0.0, 0.0, 0.0), matplotlib.colors.to_rgba('none'), matplotlib.colors.to_rgba('#1e1e1e')]
+=======
+    assert fig.get_facecolor() in [(0.0, 0.0, 0.0, 0.0), matplotlib.colors.to_rgba('none')]
+>>>>>>> Stashed changes
 
 def test_plot_tas_light_mode():
     data = {'SiO2': [60.0], 'Total_Alkali': [10.0]}
