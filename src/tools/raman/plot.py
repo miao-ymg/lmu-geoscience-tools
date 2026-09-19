@@ -38,7 +38,7 @@ def find_peaks(x, y, window_size=50, prominence_factor=1.5):
     
     return [(x[i], y[i]) for i in peaks_idx]
 
-def plot_raman(dfs_dict, dark_mode=False):
+def plot_raman(dfs_dict, dark_mode=False, selected_x=None):
     """
     Plots Raman spectra from a dictionary of DataFrames.
     dfs_dict: {filename: DataFrame}
@@ -49,12 +49,16 @@ def plot_raman(dfs_dict, dark_mode=False):
         line_color = colors['plot-line-dark']
         grid_color = colors['plot-grid-dark']
         base_accent = colors['plot-accent-dark']
+        point_color = colors['plot-point-dark']
+        edge_color = colors['plot-edge-dark']
     else:
         bg_color = colors['plot-bg-light']
         text_color = colors['plot-text-light']
         line_color = colors['plot-line-light']
         grid_color = colors['plot-grid-light']
         base_accent = colors['plot-accent-light']
+        point_color = colors['plot-point-light']
+        edge_color = colors['plot-edge-light']
         
     fig = plt.figure(figsize=(10, 6), facecolor=bg_color)
     ax = fig.add_subplot(111)
@@ -143,6 +147,51 @@ def plot_raman(dfs_dict, dark_mode=False):
     ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10))
     ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=8))
     
+    # Vertical tracking cursor line behind graph (zorder=0.8)
+    cursor_line = ax.axvline(x=0, color=line_color, linestyle='--', linewidth=1.2, alpha=0.75, zorder=0.8, visible=False, animated=True)
+    ax.cursor_line = cursor_line
+
+    # Hover cross marker on curves: larger, bright white/text-color, prominent
+    cross_color = "#ffffff" if dark_mode else "#000000"
+    hover_cross = ax.scatter([], [], color=cross_color, s=150, linewidths=2.2, zorder=5.5, marker='+', visible=False, animated=True)
+    ax.hover_cross = hover_cross
+
+    # Marker for selected points (yellow circle with edge, as used in other tools)
+    sel_scatter = ax.scatter([], [], color=point_color, edgecolors=edge_color, s=100, linewidths=1.5, zorder=6, marker='o', animated=True)
+    ax.selected_scatter = sel_scatter
+
+    # Text annotation displaying the Raman shift x-value cleanly below the selected point
+    val_text = ax.annotate("", xy=(0, 0), xytext=(0, -18), textcoords="offset points",
+                           color=text_color, fontsize=9, fontweight='bold', ha='center', va='top', 
+                           bbox=dict(boxstyle='round,pad=0.25', facecolor=bg_color if bg_color != 'none' else '#161b22', edgecolor=line_color, alpha=0.9),
+                           visible=False, animated=True, zorder=10, clip_on=False)
+    ax.val_text = val_text
+
+    # If an initial selected_x is passed, position marker and text
+    if selected_x is not None:
+        pts_x = []
+        pts_y = []
+        for df in dfs_dict.values():
+            xs = df['Raman Shift'].values
+            ys = df['Intensity'].values
+            if len(xs) > 0 and xs.min() <= selected_x <= xs.max():
+                y_val = float(np.interp(selected_x, xs, ys))
+                pts_x.append(selected_x)
+                pts_y.append(y_val)
+        if pts_x:
+            sel_scatter.set_offsets(np.column_stack([pts_x, pts_y]))
+            val_text.xy = (pts_x[0], pts_y[0])
+            val_text.set_text(f"{int(round(pts_x[0]))} cm⁻¹")
+            if min_x != float('inf') and max_x > min_x:
+                norm_x = (pts_x[0] - min_x) / (max_x - min_x)
+                if norm_x < 0.12:
+                    val_text.set_ha('left')
+                    val_text.xyann = (8, -18)
+                elif norm_x > 0.88:
+                    val_text.set_ha('right')
+                    val_text.xyann = (-8, -18)
+            val_text.set_visible(True)
+
     # Set limits so plot sticks to the axes
     if min_x != float('inf'):
         ax.set_xlim(min_x, max_x)
