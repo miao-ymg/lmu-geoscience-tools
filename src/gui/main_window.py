@@ -5,7 +5,8 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, 
     QLabel, QTreeWidget, QTreeWidgetItem, QStackedWidget, QPushButton
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QSize, QByteArray, QVariantAnimation, QEasingCurve
+from PyQt6.QtGui import QIcon, QPixmap, QColor
 
 from gui.components.loading_overlays import StartupOverlay
 
@@ -273,34 +274,116 @@ class MainWindow(QMainWindow):
             from utils.urls import TOOL_URLS
             url = TOOL_URLS.get(tool_name, "")
             
-            # Add title at the top left
-            class ClickableTitleLabel(QLabel):
-                def __init__(self, text, link, parent=None):
-                    super().__init__(text, parent)
-                    self.link = link
-                    self.setObjectName("FeatureTitle")
-                    
-                    font = self.font()
-                    font.setPointSize(36)
-                    font.setBold(True)
-                    self.setFont(font)
-                    
-                    if link:
+            # Add title and link layout at the top left
+            title_layout = QHBoxLayout()
+            title_layout.setContentsMargins(0, 0, 0, 0)
+            title_layout.setSpacing(32)
+            
+            title_label = QLabel(content_text)
+            title_label.setObjectName("FeatureTitle")
+            font = title_label.font()
+            font.setPointSize(36)
+            font.setBold(True)
+            title_label.setFont(font)
+            
+            title_layout.addWidget(title_label)
+            
+            if url:
+                class ClickableLinkLabel(QWidget):
+                    def __init__(self, text, link, parent=None):
+                        super().__init__(parent)
+                        from main import resource_path
+                        
+                        self.link = link
+                        self.setObjectName("FeatureLink")
                         self.setCursor(Qt.CursorShape.PointingHandCursor)
                         self.setToolTip(f"Open {link}")
-                        self.setProperty("hasLink", True)
                         
-                def mousePressEvent(self, event):
-                    if self.link and event.button() == Qt.MouseButton.LeftButton:
-                        from PyQt6.QtGui import QDesktopServices
-                        from PyQt6.QtCore import QUrl
-                        QDesktopServices.openUrl(QUrl(self.link))
-                    super().mousePressEvent(event)
-                    
-            content_label = ClickableTitleLabel(content_text, url)
-            
-            title_layout = QHBoxLayout()
-            title_layout.addWidget(content_label)
+                        # Layout with 0 margins and 8px spacing
+                        self.main_layout = QHBoxLayout(self)
+                        self.main_layout.setContentsMargins(0, 0, 0, 0)
+                        self.main_layout.setSpacing(8)
+                        
+                        self.text_label = QLabel(text)
+                        self.text_label.setObjectName("FeatureLinkText")
+                        
+                        self.icon_label = QLabel()
+                        self.icon_label.setObjectName("FeatureLinkIcon")
+                        self.icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                        
+                        # Prepare normal and hover colors
+                        self.color_normal = QColor("#90c527")
+                        self.color_hover = QColor("#9ef04d")
+                        
+                        # Load original SVG as template for color tinted pixmap
+                        svg_path = resource_path("resources/icons/external-link.svg")
+                        with open(svg_path, 'r', encoding='utf-8') as f:
+                            self.svg_template = f.read()
+                            
+                        self.icon_label.setPixmap(self._render_icon_color(self.color_normal))
+                        
+                        self.main_layout.addWidget(self.text_label)
+                        self.main_layout.addWidget(self.icon_label)
+                        
+                        # Animation: Color fade and subtle slide (shift margins)
+                        self._anim_progress = 0.0
+                        self.anim = QVariantAnimation(self)
+                        self.anim.setDuration(260)
+                        self.anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+                        self.anim.valueChanged.connect(self._on_anim_frame)
+                        
+                    def _render_icon_color(self, color: QColor) -> QPixmap:
+                        hex_code = color.name()
+                        svg_str = self.svg_template.replace("#90C527", hex_code).replace("#90c527", hex_code)
+                        pix = QPixmap()
+                        pix.loadFromData(QByteArray(svg_str.encode('utf-8')), "SVG")
+                        # Rendering via QIcon preserves macOS Retina High-DPI sharpness
+                        return QIcon(pix).pixmap(16, 16)
+                        
+                    def _on_anim_frame(self, progress: float):
+                        self._anim_progress = progress
+                        
+                        # Interpolate color between normal and hover
+                        r = int(self.color_normal.red() + (self.color_hover.red() - self.color_normal.red()) * progress)
+                        g = int(self.color_normal.green() + (self.color_hover.green() - self.color_normal.green()) * progress)
+                        b = int(self.color_normal.blue() + (self.color_hover.blue() - self.color_normal.blue()) * progress)
+                        current_color = QColor(r, g, b)
+                        hex_code = current_color.name()
+                        
+                        # Update text label color
+                        self.text_label.setStyleSheet(f"color: {hex_code};")
+                        
+                        # Update icon pixmap
+                        self.icon_label.setPixmap(self._render_icon_color(current_color))
+                        
+                        # Subtle slide right: increase left margin from 0 to 6px
+                        slide_px = int(round(progress * 6))
+                        self.main_layout.setContentsMargins(slide_px, 0, 0, 0)
+                        
+                    def enterEvent(self, event):
+                        self.anim.stop()
+                        self.anim.setStartValue(self._anim_progress)
+                        self.anim.setEndValue(1.0)
+                        self.anim.start()
+                        super().enterEvent(event)
+                        
+                    def leaveEvent(self, event):
+                        self.anim.stop()
+                        self.anim.setStartValue(self._anim_progress)
+                        self.anim.setEndValue(0.0)
+                        self.anim.start()
+                        super().leaveEvent(event)
+                        
+                    def mousePressEvent(self, event):
+                        if event.button() == Qt.MouseButton.LeftButton:
+                            from PyQt6.QtGui import QDesktopServices
+                            from PyQt6.QtCore import QUrl
+                            QDesktopServices.openUrl(QUrl(self.link))
+                        super().mousePressEvent(event)
+                        
+                link_label = ClickableLinkLabel("GEOWiki Page", url)
+                title_layout.addWidget(link_label, alignment=Qt.AlignmentFlag.AlignBaseline)
+                
             title_layout.addStretch()
             content_layout.addLayout(title_layout)
             
