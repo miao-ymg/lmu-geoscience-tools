@@ -28,7 +28,7 @@ class PlotView(BasePlotView):
     def __init__(self, on_new_sample, on_download):
         super().__init__(on_new_sample)
         self.download_btn.clicked.connect(on_download)
-        self.set_note("Note: The detected peak positions are based on statistical signal-processing algorithms and may be inaccurate.")
+        self.set_note("Note: The detected peak positions are based on statistical signal-processing algorithms and may be inaccurate.", key="note_raman")
         self.dfs_dict = {}
         self.selected_x = None
         self._cid_motion = None
@@ -278,6 +278,14 @@ class RamanWidget(QWidget):
         self.dfs_dict = {}
         
         self.worker = None
+
+        from utils.i18n import i18n
+        i18n.language_changed.connect(lambda _: self.refresh_plot())
+
+    def refresh_plot(self):
+        if not self.dfs_dict:
+            return
+        self.start_worker(dfs_dict=self.dfs_dict, show_loading=False)
         
     def show_upload(self):
         self.upload_view.reset()

@@ -196,9 +196,22 @@ def plot_feldspar(endmembers_df=None, dark_mode=True, classification='900° C'):
             
     # Track drawn labels to avoid duplicate legend entries/text
     drawn_labels = set()
+    from utils.i18n import tr
+    feldspar_trans_map = {
+        "Miscibility Gap": "feldspar_miscibility_gap",
+        "Albite": "feldspar_albite",
+        "Oligoclase": "feldspar_oligoclase",
+        "Andesine": "feldspar_andesine",
+        "Labradorite": "feldspar_labradorite",
+        "Bytownite": "feldspar_bytownite",
+        "Anorthite": "feldspar_anorthite",
+        "Sanidine": "feldspar_sanidine",
+        "Anorthoclase": "feldspar_anorthoclase",
+    }
 
     for class_rule in class_dict:
         class_name = class_rule['name']
+        display_name = tr(feldspar_trans_map.get(class_name, class_name))
             
         ternary_pts = _get_region_polygon(class_rule)
         if ternary_pts:
@@ -221,7 +234,7 @@ def plot_feldspar(endmembers_df=None, dark_mode=True, classification='900° C'):
             
             if class_name != "Miscibility Gap" and class_name not in drawn_labels:
                 # Add to legend
-                patch = mpatches.Patch(color=color, alpha=0.4, label=class_name)
+                patch = mpatches.Patch(color=color, alpha=0.4, label=display_name)
                 legend_handles.append(patch)
                 drawn_labels.add(class_name)
             
@@ -236,15 +249,15 @@ def plot_feldspar(endmembers_df=None, dark_mode=True, classification='900° C'):
                     center_x = sum(c[0] for c in poly_coords) / len(poly_coords)
                     center_y = sum(c[1] for c in poly_coords) / len(poly_coords)
                 
-                ax.text(center_x, center_y, class_name, color=text_color, fontsize=7, ha='center', va='center', zorder=5)
+                ax.text(center_x, center_y, display_name, color=text_color, fontsize=7, ha='center', va='center', zorder=5)
 
     sqrt3_2 = np.sqrt(3) / 2
     # Edge texts
     if class_dict:
         # Ab-Or edge
-        ax.text(0.20, sqrt3_2/2 + 0.05, "Alkali Feldspars", color=text_color, fontsize=12, ha='center', va='center', rotation=60)
+        ax.text(0.20, sqrt3_2/2 + 0.05, tr("alkali_feldspars"), color=text_color, fontsize=12, ha='center', va='center', rotation=60)
         # Ab-An edge
-        ax.text(0.5, -0.05, "Plagioclases", color=text_color, fontsize=12, ha='center', va='top')
+        ax.text(0.5, -0.05, tr("plagioclases"), color=text_color, fontsize=12, ha='center', va='top')
 
     # ── Data points ───────────────────────────────────────────────────
     if not endmembers_df.empty:

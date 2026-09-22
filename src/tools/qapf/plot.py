@@ -6,6 +6,59 @@ import yaml
 import matplotlib.patches as patches
 from theme import colors
 from tools.common.plot_utils import draw_sample_points, draw_classifications_legend
+from utils.i18n import tr
+
+QAPF_TRANS_MAP = {
+    "Quartzolite": "qapf_quartzolite",
+    "Quartz-rich Granitoid": "qapf_quartz_rich_granitoid",
+    "Alkali Feldspar Granite": "qapf_alkali_feldspar_granite",
+    "Granite": "qapf_granite",
+    "Granodiorite": "qapf_granodiorite",
+    "Tonalite": "qapf_tonalite",
+    "Quartz Alkali Feldspar Syenite": "qapf_quartz_alkali_feldspar_syenite",
+    "Quartz Syenite": "qapf_quartz_syenite",
+    "Quartz Monzonite": "qapf_quartz_monzonite",
+    "Quartz Monzodiorite": "qapf_quartz_monzodiorite",
+    "Quartz Diorite/Gabbro": "qapf_quartz_diorite_gabbro",
+    "Alkali Feldspar Syenite": "qapf_alkali_feldspar_syenite",
+    "Syenite": "qapf_syenite",
+    "Monzonite": "qapf_monzonite",
+    "Monzodiorite": "qapf_monzodiorite",
+    "Diorite/Gabbro/Anorthosite": "qapf_diorite_gabbro_anorthosite",
+    "Foid-bearing Alkali Feldspar Syenite": "qapf_foid_bearing_alkali_feldspar_syenite",
+    "Foid-bearing Syenite": "qapf_foid_bearing_syenite",
+    "Foid-bearing Monzonite": "qapf_foid_bearing_monzonite",
+    "Foid-bearing Monzodiorite": "qapf_foid_bearing_monzodiorite",
+    "Foid-bearing Diorite/Gabbro": "qapf_foid_bearing_diorite_gabbro",
+    "Foid Syenite": "qapf_foid_syenite",
+    "Foid Monzosyenite": "qapf_foid_monzosyenite",
+    "Foid Monzodiorite": "qapf_foid_monzodiorite",
+    "Foid Diorite/Gabbro": "qapf_foid_diorite_gabbro",
+    "Foidolite": "qapf_foidolite",
+    "Quartz-rich Volcanic Rock": "qapf_quartz_rich_volcanic_rock",
+    "Alkali Feldspar Rhyolite": "qapf_alkali_feldspar_rhyolite",
+    "Rhyolite": "qapf_rhyolite",
+    "Dacite": "qapf_dacite",
+    "Quartz Alkali Feldspar Trachyte": "qapf_quartz_alkali_feldspar_trachyte",
+    "Quartz Trachyte": "qapf_quartz_trachyte",
+    "Quartz Latite": "qapf_quartz_latite",
+    "Quartz Basaltic Andesite": "qapf_quartz_basaltic_andesite",
+    "Alkali Feldspar Trachyte": "qapf_alkali_feldspar_trachyte",
+    "Trachyte": "qapf_trachyte",
+    "Latite": "qapf_latite",
+    "Basaltic Andesite": "qapf_basaltic_andesite",
+    "Foid-bearing Alkali Feldspar Trachyte": "qapf_foid_bearing_alkali_feldspar_trachyte",
+    "Foid-bearing Trachyte": "qapf_foid_bearing_trachyte",
+    "Foid-bearing Latite": "qapf_foid_bearing_latite",
+    "Foid-bearing Basaltic Andesite": "qapf_foid_bearing_basaltic_andesite",
+    "Phonolite": "qapf_phonolite",
+    "Tephritic Phonolite": "qapf_tephritic_phonolite",
+    "Phonolitic Tephrite": "qapf_phonolitic_tephrite",
+    "Tephrite/Basanite": "qapf_tephrite_basanite",
+    "Phonolitic Foidite": "qapf_phonolitic_foidite",
+    "Tephritic Foidite": "qapf_tephritic_foidite",
+    "Foidite": "qapf_foidite"
+}
 
 def _get_resource_path(filename):
     """Get absolute path to a resource file in the qapf package.
@@ -191,7 +244,8 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
                 # Actually, average centroid works well for QAPF.
                 ax.text(cx, cy, str(i), color=text_color, fontsize=9, ha='center', va='center', fontweight='bold', zorder=4)
                 
-                handle = Line2D([0], [0], color='none', marker='', label=f"{i}. {name}")
+                translated_name = tr(QAPF_TRANS_MAP.get(name, name))
+                handle = Line2D([0], [0], color='none', marker='', label=f"{i}. {translated_name}")
                 legend_handles.append(handle)
             
             if legend_handles:
@@ -290,7 +344,7 @@ def plot_qapf(normalized_df, mode='QAPF', dark_mode=False, highlight_axis=None, 
         
         cbar_ax = fig.add_axes([cbar_x, cbar_y, cbar_w, 0.03])
         cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
-        cbar.set_label(f'{highlight_axis} Axis Highlight (%)', color=text_color, fontweight='bold', labelpad=5)
+        cbar.set_label(tr("axis_highlight", axis=highlight_axis), color=text_color, fontweight='bold', labelpad=5)
         cbar.ax.xaxis.set_tick_params(color=text_color, labelcolor=text_color)
         cbar.outline.set_edgecolor(text_color)
         

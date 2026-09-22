@@ -58,15 +58,17 @@ def load_and_validate_data(file_path: str):
     has columns renamed to canonical symbols (Na, K, Ca) plus any extras.
     On failure, df is None and error_message is a human-readable string.
     """
+    from utils.i18n import tr
+
     try:
         if file_path.endswith('.csv'):
             df = pd.read_csv(file_path, header=None)
         elif file_path.endswith(('.xlsx', '.xls')):
             df = pd.read_excel(file_path, header=None)
         else:
-            return None, "Unsupported file type. Please upload a CSV or Excel file."
+            return None, tr("err_unsupported_file")
     except Exception as e:
-        return None, f"Could not open file: {e}"
+        return None, tr("err_file_corrupt")
 
     # Find the header row: the first row that contains at least one known alias
     header_idx = -1
@@ -77,10 +79,7 @@ def load_and_validate_data(file_path: str):
             break
 
     if header_idx == -1:
-        return None, (
-            "Could not find column headers for Na/K/Ca in the file. "
-            "Please check that the file contains columns for Sodium, Potassium, and Calcium."
-        )
+        return None, tr("err_feldspar_no_headers")
 
     # Set header and drop preceding rows
     df.columns = [str(c).strip() for c in df.iloc[header_idx]]
@@ -93,10 +92,7 @@ def load_and_validate_data(file_path: str):
     required = ['Na', 'K', 'Ca']
     missing = [r for r in required if r not in df.columns]
     if missing:
-        return None, (
-            f"Required column(s) {missing} not found. "
-            "Please make sure your file has columns for Sodium (Na), Potassium (K), and Calcium (Ca)."
-        )
+        return None, tr("err_feldspar_missing", missing=", ".join(missing))
 
     # Drop unit row if the first data row is non-numeric for the Na column
     if len(df) > 0:
@@ -118,7 +114,7 @@ def load_and_validate_data(file_path: str):
     df = df[~((df['Na'] == 0) & (df['K'] == 0) & (df['Ca'] == 0))].reset_index(drop=True)
 
     if df.empty:
-        return None, "No valid data rows found after parsing. Please check the file."
+        return None, tr("err_feldspar_no_data")
 
     return df, None
 

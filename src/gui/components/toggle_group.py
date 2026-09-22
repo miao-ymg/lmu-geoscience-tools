@@ -6,8 +6,13 @@ from theme import colors, hex_to_rgb
 class ToggleGroup(QWidget):
     selectionChanged = pyqtSignal(str)
     
-    def __init__(self, label_text, options, default_option=None):
+    def __init__(self, label_text, options, default_option=None, label_key=None, option_keys=None):
         super().__init__()
+        self.label_text = label_text
+        self.label_key = label_key
+        self.option_keys = option_keys or {}  # mapping: internal_key -> translation_key
+        self.options = options
+        self.current_selection = default_option
         
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -28,17 +33,63 @@ class ToggleGroup(QWidget):
         self.buttons_layout.addStretch()
         self.layout.addLayout(self.buttons_layout)
         
-    def update_options(self, options, default_option=None):
+        from utils.i18n import i18n
+        self.retranslate_ui()
+        i18n.language_changed.connect(self.retranslate_ui)
+        
+    def retranslate_ui(self, lang=None):
+        from utils.i18n import tr
+        if self.label_key:
+            translated_title = tr(self.label_key).rstrip(':')
+            self.label.setText(translated_title)
+        
+        # Update text on each button while keeping their internal key
+        for btn in self.button_group.buttons():
+            key = getattr(btn, 'internal_key', btn.text())
+            trans_key = self.option_keys.get(key)
+            if trans_key:
+                btn.setText(tr(trans_key))
+            else:
+                btn.setText(key)
+            if isinstance(btn, FadingButton):
+                btn.update_style()
+                
+    def get_selected(self):
+        return self.current_selection
+
+    def set_selected(self, key):
+        self.current_selection = key
+        for btn in self.button_group.buttons():
+            b_key = getattr(btn, 'internal_key', btn.text())
+            if b_key == key:
+                btn.setChecked(True)
+            else:
+                btn.setChecked(False)
+            if isinstance(btn, FadingButton):
+                btn.update_style()
+
+    def update_options(self, options, default_option=None, option_keys=None):
+        if option_keys is not None:
+            self.option_keys = option_keys
+            
         # Remove old buttons
         for btn in self.button_group.buttons():
             self.button_group.removeButton(btn)
             self.buttons_layout.removeWidget(btn)
             btn.deleteLater()
             
-        for val in options:
-            btn = FadingButton(val)
+        self.options = options
+        if default_option is not None:
+            self.current_selection = default_option
             
-            if val == default_option:
+        from utils.i18n import tr
+        for val in options:
+            trans_key = self.option_keys.get(val)
+            display_text = tr(trans_key) if trans_key else val
+            btn = FadingButton(display_text)
+            btn.internal_key = val
+            
+            if val == self.current_selection:
                 btn.setChecked(True)
             
             self.button_group.addButton(btn)
@@ -61,7 +112,9 @@ class ToggleGroup(QWidget):
         for b in self.button_group.buttons():
             if isinstance(b, FadingButton):
                 b.update_style()
-        self.selectionChanged.emit(btn.text())
+        internal_key = getattr(btn, 'internal_key', btn.text())
+        self.current_selection = internal_key
+        self.selectionChanged.emit(internal_key)
 
 class FadingButton(QPushButton):
     def __init__(self, text, parent=None):

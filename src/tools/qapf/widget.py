@@ -40,8 +40,24 @@ class PlotView(BasePlotView):
     def __init__(self, on_new_sample, on_download, on_highlight_changed, on_classification_changed):
         super().__init__(on_new_sample)
         
-        self.highlight_toggle = ToggleGroup("Highlight Axis:", ['None', 'A', 'P'], 'None')
-        self.classification_toggle = ToggleGroup("Classification:", ['None', 'Volcanites', 'Plutonites'], 'None')
+        self.highlight_toggle = ToggleGroup(
+            "Highlight Axis:", 
+            ['None', 'A', 'P'], 
+            'None',
+            label_key="toggle_highlight_axis",
+            option_keys={'None': 'option_none'}
+        )
+        self.classification_toggle = ToggleGroup(
+            "Classification:", 
+            ['None', 'Volcanites', 'Plutonites'], 
+            'None',
+            label_key="toggle_classification",
+            option_keys={
+                'None': 'option_none', 
+                'Volcanites': 'option_volcanites', 
+                'Plutonites': 'option_plutonites'
+            }
+        )
         
         self.highlight_toggle.selectionChanged.connect(on_highlight_changed)
         self.classification_toggle.selectionChanged.connect(on_classification_changed)
@@ -60,7 +76,7 @@ class PlotView(BasePlotView):
             options.insert(1, 'Q')
         if mode in ['QAPF', 'APF']:
             options.append('F')
-        self.highlight_toggle.update_options(options, 'None')
+        self.highlight_toggle.update_options(options, self.highlight_toggle.get_selected(), option_keys={'None': 'option_none'})
 
 class QapfWidget(QWidget):
     def __init__(self):
@@ -73,7 +89,7 @@ class QapfWidget(QWidget):
         instructions_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'column_aliases.yml')
         from utils.instructions import get_instructions_data
         instructions = get_instructions_data(instructions_path, optional_columns=['QUARTZ', 'FOID'])
-        instructions["note"] = "Note: Your file must contain at least a Quartz (Q) or Foid (F) column."
+        instructions["note_key"] = "qapf_must_contain_note"
         self.upload_view = UploadBox(self.on_file_selected, self.on_generate_clicked, instructions=instructions)
         self.plot_view = PlotView(self.show_upload, self.download_plot, self.on_highlight_changed, self.on_classification_changed)
         self.loading_overlay = PanelOverlay()
@@ -91,6 +107,9 @@ class QapfWidget(QWidget):
         self.current_mode = 'QAPF'
         
         self.worker = None
+
+        from utils.i18n import i18n
+        i18n.language_changed.connect(lambda _: self.refresh_plot())
         
     def show_upload(self):
         self.upload_view.reset()
@@ -123,7 +142,15 @@ class QapfWidget(QWidget):
                 self.current_highlight = 'None'
                 self.current_classification = 'None'
                 self.plot_view.update_highlight_options(mode)
-                self.plot_view.classification_toggle.update_options(['None', 'Volcanites', 'Plutonites'], 'None')
+                self.plot_view.classification_toggle.update_options(
+                    ['None', 'Volcanites', 'Plutonites'], 
+                    'None',
+                    option_keys={
+                        'None': 'option_none', 
+                        'Volcanites': 'option_volcanites', 
+                        'Plutonites': 'option_plutonites'
+                    }
+                )
                 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
@@ -168,7 +195,15 @@ class QapfWidget(QWidget):
                 self.current_highlight = 'None'
                 self.current_classification = 'None'
                 self.plot_view.update_highlight_options(mode)
-                self.plot_view.classification_toggle.update_options(['None', 'Volcanites', 'Plutonites'], 'None')
+                self.plot_view.classification_toggle.update_options(
+                    ['None', 'Volcanites', 'Plutonites'], 
+                    'None',
+                    option_keys={
+                        'None': 'option_none', 
+                        'Volcanites': 'option_volcanites', 
+                        'Plutonites': 'option_plutonites'
+                    }
+                )
             
         if fig:
             self.plot_view.set_plot(fig)

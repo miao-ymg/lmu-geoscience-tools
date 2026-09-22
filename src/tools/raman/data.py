@@ -26,7 +26,8 @@ def load_and_validate_data(file_path):
                         pass
                         
         if not x_vals:
-            return None, "No valid data found. File must contain lines with exactly two numbers (Raman Shift and Intensity)."
+            from utils.i18n import tr
+            return None, tr("err_raman_no_data")
             
         df = pd.DataFrame({
             'Raman Shift': x_vals,
@@ -34,4 +35,5 @@ def load_and_validate_data(file_path):
         })
         return df, None
     except Exception as e:
-        return None, f"Failed to read file: {str(e)}"
+        from utils.i18n import tr
+        return None, tr("err_raman_read_failed", error=str(e))

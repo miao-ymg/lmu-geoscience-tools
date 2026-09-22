@@ -9,6 +9,7 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal, QSize, QByteArray, QVariantAni
 from PyQt6.QtGui import QIcon, QPixmap, QColor
 
 from gui.components.loading_overlays import StartupOverlay
+from utils.i18n import i18n, tr
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -89,21 +90,21 @@ class MainWindow(QMainWindow):
         header_layout.setSpacing(4)
 
         # Title
-        title_label = QLabel("LMU Geoscience Tools")
-        title_label.setObjectName("AppTitle")
-        header_layout.addWidget(title_label)
+        self.app_title_label = QLabel("LMU Geoscience Tools")
+        self.app_title_label.setObjectName("AppTitle")
+        header_layout.addWidget(self.app_title_label)
 
         # Subtitle
-        sub_label = QLabel("CHAIR OF GEOLOGY")
-        sub_label.setObjectName("AppSubtitle")
-        header_layout.addWidget(sub_label)
+        self.app_sub_label = QLabel("CHAIR OF GEOLOGY")
+        self.app_sub_label.setObjectName("AppSubtitle")
+        header_layout.addWidget(self.app_sub_label)
 
         navbar_layout.addWidget(header_container)
 
         # Section Header
-        section_label = QLabel("GEOSCIENCE TOOLSET")
-        section_label.setObjectName("SidebarSectionHeader")
-        navbar_layout.addWidget(section_label)
+        self.section_label = QLabel("GEOSCIENCE TOOLSET")
+        self.section_label.setObjectName("SidebarSectionHeader")
+        navbar_layout.addWidget(self.section_label)
 
         # Feature List (Tree Widget)
         self.feature_tree = QTreeWidget()
@@ -112,6 +113,11 @@ class MainWindow(QMainWindow):
         self.feature_tree.setIndentation(0)
         self.feature_tree.installEventFilter(self)
         navbar_layout.addWidget(self.feature_tree)
+
+        # Language Switcher at bottom of Navbar
+        from gui.components.language_bar import LanguageBar
+        self.language_bar = LanguageBar()
+        navbar_layout.addWidget(self.language_bar)
 
         # Right Content Area
         self.content_area = QStackedWidget()
@@ -124,16 +130,19 @@ class MainWindow(QMainWindow):
         self.setup_home_dashboard()
 
         # --- TOOLS ARE HERE ---
-        features = {
-            "QAPF Diagrams": "QAPF Diagrams",
-            "TAS Diagrams": "TAS Diagrams",
-            "Feldspar Diagrams": "Feldspar Diagrams",
-            "Ultramafic Diagrams": "Ultramafic Diagrams",
-            "Raman Spectra": "Raman Spectra"
-        }
-        self.features = {k: features[k] for k in sorted(features.keys())}
+        self.TOOL_KEYS = [
+            ("Feldspar Diagrams", "tool_feldspar"),
+            ("QAPF Diagrams", "tool_qapf"),
+            ("Raman Spectra", "tool_raman"),
+            ("TAS Diagrams", "tool_tas"),
+            ("Ultramafic Diagrams", "tool_ultramafic"),
+        ]
 
         self.setup_features()
+
+        # Connect i18n language updates
+        i18n.language_changed.connect(self.retranslate_ui)
+        self.retranslate_ui(i18n.get_language())
 
         # Sliding Highlight Widget for the sidebar
         from gui.components.sidebar_delegate import SidebarDelegate, SlidingAnimator
@@ -214,23 +223,23 @@ class MainWindow(QMainWindow):
         home_layout.addStretch(1)
         
         # Dashboard Title
-        welcome_label = QLabel("Welcome to LMU Geoscience Tools")
-        welcome_label.setObjectName("DashboardTitle")
-        welcome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        home_layout.addWidget(welcome_label)
+        self.welcome_label = QLabel("Welcome to LMU Geoscience Tools")
+        self.welcome_label.setObjectName("DashboardTitle")
+        self.welcome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        home_layout.addWidget(self.welcome_label)
         
         # Subtitle / Description text and guaranteed center alignment
-        subtitle_label = QLabel(
+        self.subtitle_label = QLabel(
             '<div style="text-align: center; line-height: 120%;">'
             'Select a tool from the sidebar to get started. These utilities facilitate rock classification,<br>'
             'mineral chemistry plotting, and spectral analysis for academic petrology labs.'
             '</div>'
         )
-        subtitle_label.setObjectName("DashboardSubtitle")
-        subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitle_label.setTextFormat(Qt.TextFormat.RichText)
-        subtitle_label.setWordWrap(False)
-        home_layout.addWidget(subtitle_label)
+        self.subtitle_label.setObjectName("DashboardSubtitle")
+        self.subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.subtitle_label.setTextFormat(Qt.TextFormat.RichText)
+        self.subtitle_label.setWordWrap(False)
+        home_layout.addWidget(self.subtitle_label)
         
         home_layout.addStretch(1)
         
@@ -239,31 +248,36 @@ class MainWindow(QMainWindow):
         credit_layout.setContentsMargins(0, 0, 10, 5)
         credit_layout.addStretch()
         
-        credit_label = QLabel(
+        self.credit_label = QLabel(
             '<a href="https://www.magnific.com/free-ai-image/abstract-aerial-view-layered-geological-formations-desert-landscape_419049618.htm#fromView=keyword&page=1&position=2&uuid=9bdcd92b-9a15-4292-90c7-5f71638f2614&track=ais_hybrid&query=Geology+wallpaper" style="color: #627284; text-decoration: none; font-size: 11px;">Image by magnific</a>'
         )
-        credit_label.setObjectName("HomeImageCredit")
-        credit_label.setOpenExternalLinks(True)
-        credit_label.setTextFormat(Qt.TextFormat.RichText)
-        credit_layout.addWidget(credit_label)
+        self.credit_label.setObjectName("HomeImageCredit")
+        self.credit_label.setOpenExternalLinks(True)
+        self.credit_label.setTextFormat(Qt.TextFormat.RichText)
+        credit_layout.addWidget(self.credit_label)
         
         home_layout.addLayout(credit_layout)
         
         # Add Home Portal item to the tree
-        home_item = QTreeWidgetItem(self.feature_tree)
-        home_item.setText(0, "Home Portal")
+        self.home_item = QTreeWidgetItem(self.feature_tree)
+        self.home_item.setText(0, "Home Portal")
         
         self.content_area.addWidget(home_widget)
-        home_item.setData(0, Qt.ItemDataRole.UserRole, self.content_area.count() - 1)
+        self.home_item.setData(0, Qt.ItemDataRole.UserRole, self.content_area.count() - 1)
         
         # Select Home Portal by default
-        self.feature_tree.setCurrentItem(home_item)
+        self.feature_tree.setCurrentItem(self.home_item)
         self.content_area.setCurrentIndex(0)
 
     def setup_features(self):
-        for tool_name, content_text in self.features.items():
+        self.tool_items = []
+        self.feature_title_labels = []
+        self.link_labels = []
+
+        for tool_name, trans_key in self.TOOL_KEYS:
             tool_item = QTreeWidgetItem(self.feature_tree)
             tool_item.setText(0, tool_name)
+            self.tool_items.append((tool_item, trans_key))
 
             # Create a simple widget for this sub-feature
             content_widget = QWidget()
@@ -279,7 +293,7 @@ class MainWindow(QMainWindow):
             title_layout.setContentsMargins(0, 0, 0, 0)
             title_layout.setSpacing(32)
             
-            title_label = QLabel(content_text)
+            title_label = QLabel(tool_name)
             title_label.setObjectName("FeatureTitle")
             font = title_label.font()
             font.setPointSize(36)
@@ -287,6 +301,7 @@ class MainWindow(QMainWindow):
             title_label.setFont(font)
             
             title_layout.addWidget(title_label)
+            self.feature_title_labels.append((title_label, trans_key))
             
             if url:
                 class ClickableLinkLabel(QWidget):
@@ -383,6 +398,7 @@ class MainWindow(QMainWindow):
                         
                 link_label = ClickableLinkLabel("GEOWiki Page", url)
                 title_layout.addWidget(link_label, alignment=Qt.AlignmentFlag.AlignBaseline)
+                self.link_labels.append(link_label)
                 
             title_layout.addStretch()
             content_layout.addLayout(title_layout)
@@ -426,6 +442,49 @@ class MainWindow(QMainWindow):
             
             # Store the index of the widget in the item
             tool_item.setData(0, Qt.ItemDataRole.UserRole, self.content_area.count() - 1)
+
+    def retranslate_ui(self, lang=None):
+        from utils.i18n import tr, i18n
+        current_lang = i18n.get_language()
+
+        # Header labels
+        self.app_title_label.setText(tr("app_title"))
+        self.app_sub_label.setText(tr("app_subtitle"))
+        self.section_label.setText(tr("section_toolset"))
+        
+        # Home Dashboard
+        if hasattr(self, 'home_item'):
+            self.home_item.setText(0, tr("home_portal"))
+        if hasattr(self, 'welcome_label'):
+            self.welcome_label.setText(tr("home_welcome"))
+        if hasattr(self, 'subtitle_label'):
+            self.subtitle_label.setText(
+                f'<div style="text-align: center; line-height: 120%;">{tr("home_description")}</div>'
+            )
+        if hasattr(self, 'credit_label'):
+            self.credit_label.setText(
+                f'<a href="https://www.magnific.com/free-ai-image/abstract-aerial-view-layered-geological-formations-desert-landscape_419049618.htm#fromView=keyword&page=1&position=2&uuid=9bdcd92b-9a15-4292-90c7-5f71638f2614&track=ais_hybrid&query=Geology+wallpaper" style="color: #627284; text-decoration: none; font-size: 11px;">{tr("home_image_credit")}</a>'
+            )
+            
+        # Tool items in tree
+        if hasattr(self, 'tool_items'):
+            for item, trans_key in self.tool_items:
+                item.setText(0, tr(trans_key))
+                
+        # Feature titles
+        if hasattr(self, 'feature_title_labels'):
+            for lbl, trans_key in self.feature_title_labels:
+                lbl.setText(tr(trans_key))
+                
+        # Link labels
+        if hasattr(self, 'link_labels'):
+            for link_widget in self.link_labels:
+                if hasattr(link_widget, 'text_label'):
+                    link_widget.text_label.setText(tr("geowiki_page"))
+        
+        # Trigger viewport redraw for custom item delegate
+        if hasattr(self, 'feature_tree'):
+            self.feature_tree.viewport().update()
 
     def on_feature_changed(self, current_item, previous_item):
         if not current_item:

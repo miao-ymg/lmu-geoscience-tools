@@ -27,8 +27,50 @@ def plot_tas(normalized_df, dark_mode=False, rock_type='Volcanites'):
     which_labels = 'volcanic' if rock_type == 'Volcanites' else 'intrusive'
     ax = TAS(ax=ax, add_labels=True, which_labels=which_labels, fontsize=8, linewidth=1.0, color=class_line_color)
     
-    # Update label text colors
+    # Translate TAS labels according to active language
+    from utils.i18n import tr
+    tas_trans_map = {
+        'Alkalic\nBasalt': 'tas_alkalic_basalt',
+        'Subalkalic\nBasalt': 'tas_subalkalic_basalt',
+        'Foidite': 'tas_foidite',
+        'Basaltic\nAndesite': 'tas_basaltic_andesite',
+        'Andesite': 'tas_andesite',
+        'Dacite': 'tas_dacite',
+        'Picrite': 'tas_picrite',
+        'Phonolite': 'tas_phonolite',
+        'Rhyolite': 'tas_rhyolite',
+        'Trachy-\nbasalt': 'tas_trachy_basalt',
+        'Basaltic\nTrachy-\nandesite': 'tas_basaltic_trachy_andesite',
+        'Trachy-\nandesite': 'tas_trachy_andesite',
+        'Trachyte': 'tas_trachyte',
+        'Trachydacite': 'tas_trachydacite',
+        'Tephrite': 'tas_tephrite',
+        'Phonotephrite': 'tas_phonotephrite',
+        'Tephriphonolite': 'tas_tephriphonolite',
+        'Alkalic\nGabbro': 'tas_alkalic_gabbro',
+        'Subalkalic\nGabbro': 'tas_subalkalic_gabbro',
+        'Foidolite': 'tas_foidolite',
+        'Gabbroic\nDiorite': 'tas_gabbroic_diorite',
+        'Diorite': 'tas_diorite',
+        'Granodiorite': 'tas_granodiorite',
+        'Peridot-\ngabbro': 'tas_peridot_gabbro',
+        'Foid\nSyenite': 'tas_foid_syenite',
+        'Granite': 'tas_granite',
+        'Monzo-\ngabbro': 'tas_monzo_gabbro',
+        'Monzo-\ndiorite': 'tas_monzo_diorite',
+        'Monzonite': 'tas_monzonite',
+        'Syenite': 'tas_syenite',
+        'Quartz\nMonzonite': 'tas_quartz_monzonite',
+        'Foid\nGabbro': 'tas_foid_gabbro',
+        'Foid\nMonzodiorite': 'tas_foid_monzodiorite',
+        'Foid\nMonzosyenite': 'tas_foid_monzosyenite',
+    }
+
+    # Update label text colors and localized strings
     for t in ax.texts:
+        raw_text = t.get_text()
+        if raw_text in tas_trans_map:
+            t.set_text(tr(tas_trans_map[raw_text]))
         t.set_color(text_color)
         
     # Update patch edge colors for classification lines

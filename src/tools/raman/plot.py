@@ -3,6 +3,7 @@ import matplotlib.ticker as ticker
 import numpy as np
 from theme import colors
 from scipy.signal import find_peaks as scipy_find_peaks, savgol_filter
+from utils.i18n import tr
 
 def find_peaks(x, y, window_size=50, prominence_factor=1.5):
     """
@@ -137,8 +138,8 @@ def plot_raman(dfs_dict, dark_mode=False, selected_x=None):
         ax.legend(facecolor=bg_color, edgecolor=text_color, labelcolor=text_color, loc='upper right')
 
     # Labels
-    ax.set_xlabel('Raman Shift (cm$^{-1}$)', color=text_color, fontsize=12, fontweight='bold', labelpad=15)
-    ax.set_ylabel('Intensity (Counts)', color=text_color, fontsize=12, fontweight='bold', labelpad=15)
+    ax.set_xlabel(tr("raman_axis_x"), color=text_color, fontsize=12, fontweight='bold', labelpad=15)
+    ax.set_ylabel(tr("raman_axis_y"), color=text_color, fontsize=12, fontweight='bold', labelpad=15)
     
     # Grid
     ax.grid(True, linestyle='--', color=grid_color, alpha=0.5, zorder=0)

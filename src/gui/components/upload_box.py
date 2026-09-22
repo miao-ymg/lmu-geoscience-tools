@@ -151,12 +151,12 @@ class UploadBox(QWidget):
             icon_label = QLabel("ⓘ")
             icon_label.setObjectName("InstructionsIcon")
             
-            header_label = QLabel(self.instructions.get("header", ""))
-            header_label.setObjectName("InstructionsHeader")
-            header_label.setWordWrap(True)
+            self.header_label = QLabel(self.instructions.get("header", ""))
+            self.header_label.setObjectName("InstructionsHeader")
+            self.header_label.setWordWrap(True)
             
             header_layout.addWidget(icon_label)
-            header_layout.addWidget(header_label, stretch=1)
+            header_layout.addWidget(self.header_label, stretch=1)
             
             self.instructions_layout.addLayout(header_layout)
             
@@ -169,11 +169,14 @@ class UploadBox(QWidget):
                 
             # Note
             note = self.instructions.get("note")
-            if note:
-                note_label = QLabel(note)
-                note_label.setObjectName("InstructionsNote")
-                note_label.setWordWrap(True)
-                self.instructions_layout.addWidget(note_label)
+            note_key = self.instructions.get("note_key")
+            if note or note_key:
+                from utils.i18n import tr
+                display_note = tr(note_key) if note_key else note
+                self.note_label = QLabel(display_note)
+                self.note_label.setObjectName("InstructionsNote")
+                self.note_label.setWordWrap(True)
+                self.instructions_layout.addWidget(self.note_label)
             self.layout.addWidget(self.instructions_box)
         
         # --- Bottom Generate Plot Button (Green Bar) ---
@@ -187,10 +190,52 @@ class UploadBox(QWidget):
         self.current_file_path = None
         self.current_file_paths = []
         
+        from utils.i18n import i18n
+        self.retranslate_ui()
+        i18n.language_changed.connect(self.retranslate_ui)
+
+    def _get_localized_drop_title(self):
+        from utils.i18n import tr
+        if self.drop_title.lower() == "spreadsheet":
+            return tr("upload_file_type_spreadsheet")
+        elif self.drop_title.lower() == "text":
+            return tr("upload_file_type_text")
+        return self.drop_title
+
+    def retranslate_ui(self, lang=None):
+        from utils.i18n import tr
+        self.drop_subtitle_label.setText(tr("upload_drop_subtitle"))
+        self.generate_btn.setText(tr("upload_generate_btn"))
+        
+        if not self.current_file_paths:
+            localized_type = self._get_localized_drop_title()
+            self.drop_title_label.setText(tr("upload_drop_title", file_type=localized_type))
+        else:
+            if len(self.current_file_paths) == 1:
+                filename = os.path.basename(self.current_file_paths[0])
+                self.drop_title_label.setText(tr("upload_selected_single", filename=f"<span style='font-weight: 700; color: {colors['text-accent']};'>{filename}</span>"))
+            else:
+                self.drop_title_label.setText(tr("upload_selected_multiple", count=f"<span style='font-weight: 700; color: {colors['text-accent']};'>{len(self.current_file_paths)}</span>"))
+                
+        # Retranslate instructions if applicable
+        if hasattr(self, 'instructions_box') and self.instructions and isinstance(self.instructions, dict):
+            # Check for header
+            header_text = self.instructions.get("header", "")
+            if header_text.startswith("<b>Required columns"):
+                self.header_label.setText(tr("upload_required_columns_header"))
+            elif header_text.startswith("<b>Requirements:"):
+                self.header_label.setText(tr("upload_requirements_header"))
+            
+            note_key = self.instructions.get("note_key")
+            if note_key and hasattr(self, 'note_label'):
+                self.note_label.setText(tr(note_key))
+        
     def reset(self):
         self.current_file_path = None
         self.current_file_paths = []
-        self.drop_title_label.setText(f"Drag & Drop your {self.drop_title} file here")
+        from utils.i18n import tr
+        localized_type = self._get_localized_drop_title()
+        self.drop_title_label.setText(tr("upload_drop_title", file_type=localized_type))
         self.drop_title_label.setProperty("selected", False)
         self.drop_title_label.style().unpolish(self.drop_title_label)
         self.drop_title_label.style().polish(self.drop_title_label)
@@ -209,11 +254,12 @@ class UploadBox(QWidget):
             self.reset()
             return
             
+        from utils.i18n import tr
         if len(self.current_file_paths) == 1:
             filename = os.path.basename(self.current_file_paths[0])
-            self.drop_title_label.setText(f"Selected: <span style='font-weight: 700; color: {colors['text-accent']};'>{filename}</span>")
+            self.drop_title_label.setText(tr("upload_selected_single", filename=f"<span style='font-weight: 700; color: {colors['text-accent']};'>{filename}</span>"))
         else:
-            self.drop_title_label.setText(f"Selected: <span style='font-weight: 700; color: {colors['text-accent']};'>{len(self.current_file_paths)} files</span>")
+            self.drop_title_label.setText(tr("upload_selected_multiple", count=f"<span style='font-weight: 700; color: {colors['text-accent']};'>{len(self.current_file_paths)}</span>"))
             
         self.drop_title_label.setProperty("selected", True)
         self.drop_title_label.style().unpolish(self.drop_title_label)
@@ -242,15 +288,16 @@ class UploadBox(QWidget):
                 self.set_file(file_path)
             
     def open_file_dialog(self, event=None):
+        from utils.i18n import tr
         if self.multi_file:
             file_paths, _ = QFileDialog.getOpenFileNames(
-                self, "Open Data Files", "", self.file_filter
+                self, tr("upload_file_dialog_multiple_title"), "", self.file_filter
             )
             if file_paths:
                 self.set_file(file_paths)
         else:
             file_path, _ = QFileDialog.getOpenFileName(
-                self, "Open Data File", "", self.file_filter
+                self, tr("upload_file_dialog_title"), "", self.file_filter
             )
             if file_path:
                 self.set_file(file_path)

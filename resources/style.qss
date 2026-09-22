@@ -53,6 +53,12 @@ QLabel#SidebarSectionHeader {
     padding-bottom: 8px;
 }
 
+/* Language Switcher in Sidebar Bottom */
+QWidget#LanguageContainer {
+    background-color: transparent;
+    border-top: 1px solid @border-dark;
+}
+
 /* Content area */
 QStackedWidget#ContentArea {
     background-color: @bg-base;

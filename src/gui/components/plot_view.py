@@ -57,6 +57,18 @@ class BasePlotView(QWidget):
         
         self.current_fig = None
         self.canvas = None
+        self._note_key = None
+        
+        from utils.i18n import i18n, tr
+        self.retranslate_ui()
+        i18n.language_changed.connect(self.retranslate_ui)
+
+    def retranslate_ui(self, lang=None):
+        from utils.i18n import tr
+        self.download_btn.setText(tr("btn_download_image"))
+        self.new_sample_btn.setText(tr("btn_new_sample"))
+        if self._note_key:
+            self.note_label.setText(tr(self._note_key))
         
     def add_top_widget(self, widget):
         """Adds a tool-specific control widget above the canvas."""
@@ -66,9 +78,14 @@ class BasePlotView(QWidget):
         """Pushes top controls to the left by adding a stretch."""
         self.top_layout.addStretch()
 
-    def set_note(self, text):
+    def set_note(self, text, key=None):
         """Displays a standardized warning/note below the canvas."""
-        self.note_label.setText(text)
+        if key:
+            self._note_key = key
+            from utils.i18n import tr
+            self.note_label.setText(tr(key))
+        else:
+            self.note_label.setText(text)
         
     def set_plot(self, fig):
         """Embeds the generated matplotlib Figure into the UI."""
@@ -92,9 +109,10 @@ class BasePlotView(QWidget):
         if not self.current_fig:
             return
             
+        from utils.i18n import tr
         file_path, _ = QFileDialog.getSaveFileName(
             parent_widget,
-            "Save Plot",
+            tr("dialog_save_plot"),
             os.path.expanduser(f"~/Desktop/{default_filename}"),
             "PNG Images (*.png);;PDF Documents (*.pdf);;SVG Graphics (*.svg)"
         )
@@ -104,6 +122,6 @@ class BasePlotView(QWidget):
                 # Generate a clean, light-mode figure specifically for export
                 fig = generate_light_fig_func()
                 fig.savefig(file_path, dpi=300, bbox_inches='tight')
-                QMessageBox.information(parent_widget, "Success", f"Plot successfully saved to:\n{file_path}")
+                QMessageBox.information(parent_widget, tr("dialog_success"), tr("dialog_saved_to", path=file_path))
             except Exception as e:
-                QMessageBox.critical(parent_widget, "Error", f"Failed to save plot:\n{str(e)}")
+                QMessageBox.critical(parent_widget, tr("dialog_error"), tr("dialog_save_failed", error=str(e)))

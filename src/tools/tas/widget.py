@@ -35,21 +35,35 @@ class PlotView(BasePlotView):
     def __init__(self, on_new_sample, on_download, on_classification_changed):
         super().__init__(on_new_sample)
         
-        self.classification_toggle = ToggleGroup("Classification:", ['Volcanites', 'Plutonites'], 'Volcanites')
+        self.classification_toggle = ToggleGroup(
+            "Classification:", 
+            ['Volcanites', 'Plutonites'], 
+            'Volcanites',
+            label_key="toggle_classification",
+            option_keys={'Volcanites': 'option_volcanites', 'Plutonites': 'option_plutonites'}
+        )
         self.classification_toggle.selectionChanged.connect(on_classification_changed)
         
         self.add_top_widget(self.classification_toggle)
         self.add_top_stretch()
         
-        paper_label = QLabel(
-            '<a href="https://doi.org/10.1016/0012-8252(94)90029-9" style="color: #90c527; text-decoration: underline; font-size: 13px; font-weight: 500;">Paper: Middlemost (1994)</a>'
-        )
-        paper_label.setOpenExternalLinks(True)
-        paper_label.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.paper_label = QLabel()
+        self.paper_label.setOpenExternalLinks(True)
+        self.paper_label.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._update_paper_label()
         
-        self.add_top_widget(paper_label)
-        
+        self.add_top_widget(self.paper_label)
         self.download_btn.clicked.connect(on_download)
+        
+        from utils.i18n import i18n
+        i18n.language_changed.connect(self._update_paper_label)
+
+    def _update_paper_label(self, lang=None):
+        from utils.i18n import tr
+        link_text = tr("paper_middlemost")
+        self.paper_label.setText(
+            f'<a href="https://doi.org/10.1016/0012-8252(94)90029-9" style="color: #90c527; text-decoration: underline; font-size: 13px; font-weight: 500;">{link_text}</a>'
+        )
 
 
 class TasWidget(QWidget):
@@ -79,6 +93,9 @@ class TasWidget(QWidget):
         self.current_classification = 'Volcanites'
         
         self.worker = None
+
+        from utils.i18n import i18n
+        i18n.language_changed.connect(lambda _: self.refresh_plot())
         
     def show_upload(self):
         self.upload_view.reset()

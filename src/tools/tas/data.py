@@ -1,4 +1,5 @@
 import pandas as pd
+from utils.i18n import tr
 
 MAJOR_OXIDES = {
     'sio2', 'tio2', 'al2o3', 'fe2o3', 'feo', 'fe2o3t', 'feot', 
@@ -13,9 +14,9 @@ def load_and_validate_data(file_path):
         elif file_path.endswith('.xlsx') or file_path.endswith('.xls'):
             df = pd.read_excel(file_path, header=None)
         else:
-            return None, "The file could not be opened. Please make sure it is an Excel or CSV file."
+            return None, tr("err_unsupported_file")
     except Exception:
-        return None, "The file could not be opened. Please check if it's corrupted or currently open in another program."
+        return None, tr("err_file_corrupt")
     
     # Find the header row by searching for 'SiO2' (case-insensitive)
     header_idx = -1
@@ -25,7 +26,7 @@ def load_and_validate_data(file_path):
             break
             
     if header_idx == -1:
-        return None, "Could not find a 'SiO2' column in the file. Is it missing?"
+        return None, tr("err_missing_sio2")
         
     # Assign columns
     raw_cols = [str(c).strip().lower() for c in df.iloc[header_idx]]
@@ -51,7 +52,7 @@ def load_and_validate_data(file_path):
     required = ['sio2', 'na2o', 'k2o']
     for req in required:
         if req not in df.columns:
-            return None, f"Required column '{req}' is missing. Please ensure your file has SiO2, Na2O, and K2O."
+            return None, tr("err_tas_required_missing", req=req)
             
     return df, None
 

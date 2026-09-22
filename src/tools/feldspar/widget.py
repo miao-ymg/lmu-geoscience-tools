@@ -11,6 +11,7 @@ from gui.components.loading_overlays import PanelOverlay
 from gui.components.plot_view import BasePlotView
 from .data import load_and_validate_data, compute_feldspar_endmembers
 from .plot import plot_feldspar
+from utils.i18n import tr
 
 
 class PlotWorker(QThread):
@@ -39,14 +40,20 @@ class PlotView(BasePlotView):
     def __init__(self, on_new_sample, on_download, on_classification_changed):
         super().__init__(on_new_sample)
         
-        self.classification_toggle = ToggleGroup("Classification:", ['None', '900° C'], '900° C')
+        self.classification_toggle = ToggleGroup(
+            "Classification:", 
+            ['None', '900° C'], 
+            '900° C',
+            label_key="toggle_classification",
+            option_keys={'None': 'option_none', '900° C': 'option_900c'}
+        )
         self.classification_toggle.selectionChanged.connect(on_classification_changed)
         
         self.add_top_widget(self.classification_toggle)
         self.add_top_stretch()
         
         self.download_btn.clicked.connect(on_download)
-        self.set_note("Note: These classifications are only approximations and could therefore be inaccurate.")
+        self.set_note("Note: These classifications are only approximations and could therefore be inaccurate.", key="note_feldspar")
 
 
 class FeldsparWidget(QWidget):
@@ -74,6 +81,9 @@ class FeldsparWidget(QWidget):
         self.endmembers_df = None
         
         self.worker = None
+
+        from utils.i18n import i18n
+        i18n.language_changed.connect(lambda _: self.refresh_plot())
 
     # ── Callbacks ────────────────────────────────────────────────────
 
@@ -104,7 +114,7 @@ class FeldsparWidget(QWidget):
             
         # Show disclaimer only when a new file was successfully processed
         if self.endmembers_df is None or not self.endmembers_df.equals(endmembers_df):
-            QMessageBox.information(self, "Disclaimer", "Please note that you are responsible for providing correct raw Feldspar data. This tool only handles the visualization.")
+            QMessageBox.information(self, tr("disclaimer_title"), tr("feldspar_disclaimer_msg"))
             
         self.start_worker(endmembers_df=endmembers_df, show_loading=True)
 

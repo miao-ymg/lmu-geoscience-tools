@@ -36,16 +36,17 @@ def normalize_column_name(col_name):
     return col_upper
 
 def load_and_validate_data(file_path):
-    """Loads and validates QAPF data from Excel or CSV."""
+    from utils.i18n import tr
+
     try:
         if file_path.endswith('.csv'):
             df = pd.read_csv(file_path)
         elif file_path.endswith('.xlsx') or file_path.endswith('.xls'):
             df = pd.read_excel(file_path)
         else:
-            return None, None, "The file could not be opened. Please make sure it is an Excel or CSV file."
+            return None, None, tr("err_unsupported_file")
     except Exception:
-        return None, None, "The file could not be opened. Please check if it's corrupted or currently open in another program."
+        return None, None, tr("err_file_corrupt")
 
     # Normalize column names using aliases
     df.columns = [normalize_column_name(c) for c in df.columns]
@@ -54,10 +55,10 @@ def load_and_validate_data(file_path):
     required_base = ['A', 'P']
     for col in required_base:
         if col not in df.columns:
-            return None, None, f"Column '{col}' is missing from your file. Please check the column names."
+            return None, None, tr("err_qapf_column_missing", col=col)
 
     if 'Q' not in df.columns and 'F' not in df.columns:
-        return None, None, "Your file must contain at least a 'Q' (Quartz) or 'F' (Foid) column."
+        return None, None, tr("qapf_must_contain")
 
     # Fill missing optional columns with 0
     if 'Q' not in df.columns:
@@ -72,7 +73,7 @@ def load_and_validate_data(file_path):
     # Validation: Q and F cannot be both > 0 in any row
     for index, row in df.iterrows():
         if row['Q'] > 0 and row['F'] > 0:
-            return None, None, f"Row {index + 2} contains values for both Q and F. Quartz and Foids cannot exist in the same rock. Please correct your data."
+            return None, None, tr("err_qapf_both_q_f", row=index + 2)
 
     # Determine diagram mode
     q_sum = df['Q'].sum()
