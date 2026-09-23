@@ -74,7 +74,10 @@ class UltramaficWidget(QWidget):
             return
             
         try:
-            df = pd.read_excel(self.current_file_path)
+            if self.current_file_path.lower().endswith('.csv'):
+                df = pd.read_csv(self.current_file_path)
+            else:
+                df = pd.read_excel(self.current_file_path)
             normalized_df = extract_and_normalize(df)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
