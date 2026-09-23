@@ -54,8 +54,13 @@ def main():
 
     app = QApplication(sys.argv)
     
-    # Load custom IBM Plex fonts
-    from PyQt6.QtGui import QFontDatabase, QFont
+    # Set application icon
+    from PyQt6.QtGui import QFontDatabase, QFont, QIcon
+    icon_path = resource_path(os.path.join("resources", "icons", "app-icon-padded.png"))
+    if not os.path.exists(icon_path):
+        icon_path = resource_path(os.path.join("resources", "icons", "app-icon.png"))
+    if os.path.exists(icon_path):
+        app.setWindowIcon(QIcon(icon_path))
     fonts_dir = resource_path(os.path.join("resources", "fonts"))
     if os.path.exists(fonts_dir):
         for font_file in os.listdir(fonts_dir):

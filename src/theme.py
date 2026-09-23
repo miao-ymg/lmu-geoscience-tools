@@ -1,5 +1,5 @@
 """
-Centralized color palette for the LMU Geoscience Tools.
+Centralized color palette for the GeoPlottr.
 All hex codes must use lowercase letters.
 """
 

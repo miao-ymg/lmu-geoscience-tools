@@ -61,7 +61,7 @@ class LazyWidget(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("LMU Geoscience Tools")
+        self.setWindowTitle("GeoPlottr")
         
         # Set minimum size close to screen resolution (e.g. 1280x800) and maximize/fullscreen
         self.setMinimumSize(1200, 750)
@@ -90,7 +90,7 @@ class MainWindow(QMainWindow):
         header_layout.setSpacing(4)
 
         # Title
-        self.app_title_label = QLabel("LMU Geoscience Tools")
+        self.app_title_label = QLabel("GeoPlottr")
         self.app_title_label.setObjectName("AppTitle")
         header_layout.addWidget(self.app_title_label)
 
@@ -223,7 +223,7 @@ class MainWindow(QMainWindow):
         home_layout.addStretch(1)
         
         # Dashboard Title
-        self.welcome_label = QLabel("Welcome to LMU Geoscience Tools")
+        self.welcome_label = QLabel("Welcome to GeoPlottr")
         self.welcome_label.setObjectName("DashboardTitle")
         self.welcome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         home_layout.addWidget(self.welcome_label)

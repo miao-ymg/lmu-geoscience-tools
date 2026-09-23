@@ -86,7 +86,7 @@ jobs:
         shell: bash
         run: |
           cd dist
-          zip -ry "../${{ matrix.release_name }}" "LMU Geoscience Tools.app"
+          zip -ry "../${{ matrix.release_name }}" "GeoPlottr.app"
           cd ..
           mv "${{ matrix.release_name }}" "dist/${{ matrix.release_name }}"
 

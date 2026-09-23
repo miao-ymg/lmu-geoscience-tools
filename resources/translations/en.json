@@ -1,5 +1,5 @@
 {
-    "app_title": "LMU Geoscience Tools",
+    "app_title": "GeoPlottr",
     "app_subtitle": "CHAIR OF GEOLOGY",
     "section_toolset": "GEOSCIENCE TOOLSET",
     "home_portal": "Home Portal",
@@ -9,7 +9,7 @@
     "tool_ultramafic": "Ultramafic Diagrams",
     "tool_raman": "Raman Spectra",
     "geowiki_page": "GEOWiki Page",
-    "home_welcome": "Welcome to LMU Geoscience Tools",
+    "home_welcome": "Welcome to GeoPlottr",
     "home_description": "Select a tool from the sidebar to get started. These utilities facilitate rock classification,<br>mineral chemistry plotting, and spectral analysis for academic petrology labs.",
     "home_image_credit": "Image by magnific",
     "upload_drop_title": "Drag & Drop your {file_type} file here",

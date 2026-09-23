@@ -34,7 +34,7 @@ if sys.platform == 'darwin':
         pyz,
         a.scripts,
         exclude_binaries=True,
-        name='LMU Geoscience Tools',
+        name='GeoPlottr',
         debug=False,
         bootloader_ignore_signals=False,
         strip=False,
@@ -57,31 +57,35 @@ if sys.platform == 'darwin':
         strip=False,
         upx=True,
         upx_exclude=[],
-        name='LMU Geoscience Tools',
+        name='GeoPlottr',
     )
     
     app = BUNDLE(
         coll,
-        name='LMU Geoscience Tools.app',
+        name='GeoPlottr.app',
+        icon='resources/icons/app-icon.icns',
         bundle_identifier='de.lmu.geoscience-tools',
         info_plist={
-            'CFBundleName': 'LMU Geoscience Tools',
-            'CFBundleDisplayName': 'LMU Geoscience Tools',
-            'CFBundleExecutable': 'LMU Geoscience Tools',
+            'CFBundleName': 'GeoPlottr',
+            'CFBundleDisplayName': 'GeoPlottr',
+            'CFBundleExecutable': 'GeoPlottr',
             'CFBundleVersion': '0.1.0',
             'CFBundleShortVersionString': '0.1.0',
+            'CFBundleIconFile': 'app-icon.icns',
             'NSHighResolutionCapable': True,
             'LSMinimumSystemVersion': '11.0',
         },
     )
 else:
     # On Windows and Linux, build as a directory (onedir) to avoid the massive 15s self-extraction penalty on every launch
+    icon_file = 'resources/icons/app-icon.ico' if sys.platform == 'win32' else 'resources/icons/app-icon.png'
     exe = EXE(
         pyz,
         a.scripts,
         [],
         exclude_binaries=True,
         name='lmu-geoscience-tools',
+        icon=icon_file,
         debug=False,
         bootloader_ignore_signals=False,
         strip=False,
