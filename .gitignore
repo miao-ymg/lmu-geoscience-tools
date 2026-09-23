@@ -34,6 +34,8 @@ data/
 
 # === Resources (large images) ===
 resources/**/*.png
+!resources/icons/EN.png
+!resources/icons/DE.png
 
 # === Test artifacts ===
 .pytest_cache/
