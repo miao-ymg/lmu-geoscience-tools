@@ -95,7 +95,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
-          Compress-Archive -Path dist\lmu-geoscience-tools\* -DestinationPath dist\${{ matrix.release_name }}
+          Compress-Archive -Path dist\lmu-geoscience-tools -DestinationPath dist\${{ matrix.release_name }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
