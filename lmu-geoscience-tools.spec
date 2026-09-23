@@ -16,7 +16,7 @@ a = Analysis(
         ('src/tools/feldspar/*.yml', 'tools/feldspar'),
         ('src/tools/ultramafic/*.yml', 'tools/ultramafic'),
     ] + pyrolite_datas,
-    hiddenimports=['pyrolite', 'pyrolite.plot', 'pyrolite.plot.templates', 'PyQt6.QtSvg'],
+    hiddenimports=['pyrolite', 'pyrolite.plot', 'pyrolite.plot.templates', 'PyQt6.QtSvg', 'matplotlib.backends.backend_svg', 'matplotlib.backends.backend_pdf'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
