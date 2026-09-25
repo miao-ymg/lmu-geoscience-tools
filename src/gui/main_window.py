@@ -273,6 +273,101 @@ class MainWindow(QMainWindow):
         self.tool_items = []
         self.feature_title_labels = []
         self.link_labels = []
+        self.warning_link_labels = []
+
+        # Create overlay popup layer for warning notes
+        class WarningOverlay(QWidget):
+            def __init__(self, tool_dir_name, parent=None):
+                super().__init__(parent)
+                self.tool_dir_name = tool_dir_name
+                self.hide()
+
+            def set_tool_title(self, title_text):
+                self.title_label.setText(title_text)
+
+            def load_content(self):
+                # Clear existing items in scroll layout
+                while self.content_layout.count():
+                    item = self.content_layout.takeAt(0)
+                    w = item.widget()
+                    if w:
+                        w.deleteLater()
+
+                import yaml
+                from utils.i18n import i18n
+                lang = i18n.get_language()
+
+                # Get path to warnings.yml
+                if getattr(sys, 'frozen', False):
+                    yml_path = os.path.join(sys._MEIPASS, 'tools', self.tool_dir_name, 'warnings.yml')
+                else:
+                    yml_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tools', self.tool_dir_name, 'warnings.yml')
+
+                bullets = []
+                if os.path.exists(yml_path):
+                    try:
+                        with open(yml_path, 'r', encoding='utf-8') as f:
+                            data = yaml.safe_load(f)
+                            if isinstance(data, dict):
+                                bullets = data.get(lang)
+                                if not bullets:
+                                    # Fallback if preferred language is empty/missing
+                                    fallback_lang = 'de' if lang == 'en' else 'en'
+                                    bullets = data.get(fallback_lang, []) or []
+                    except Exception as e:
+                        print(f"Error loading warnings.yml for {self.tool_dir_name}: {e}")
+
+                if bullets:
+                    for item in bullets:
+                        # Check if item is a section header (e.g. starting with ⚠ or bold category)
+                        is_header = item.startswith("⚠") or item.endswith(":")
+                        lbl = QLabel(item if is_header else f"• {item}")
+                        lbl.setWordWrap(True)
+                        if is_header:
+                            lbl.setStyleSheet("""
+                                font-size: 21px;
+                                font-weight: bold;
+                                color: #ffb74d;
+                                margin-top: 16px;
+                                margin-bottom: 6px;
+                                border: none;
+                            """)
+                        else:
+                            lbl.setStyleSheet("""
+                                font-size: 19px;
+                                color: #c9d1d9;
+                                line-height: 165%;
+                                margin-bottom: 12px;
+                                border: none;
+                            """)
+                        self.content_layout.addWidget(lbl)
+                else:
+                    empty_lbl = QLabel()
+                    empty_lbl.setStyleSheet("font-size: 19px; color: #8b949e; italic; border: none;")
+                    self.content_layout.addWidget(empty_lbl)
+
+                self.content_layout.addStretch()
+
+            def resizeEvent(self, event):
+                if self.parent():
+                    self.setGeometry(self.parent().rect())
+                super().resizeEvent(event)
+
+            def paintEvent(self, event):
+                from PyQt6.QtGui import QPainter, QColor
+                painter = QPainter(self)
+                # Dimmed overlay background over the right view area
+                painter.fillRect(self.rect(), QColor(0, 0, 0, 160))
+                painter.end()
+
+        # Mapping tool names to folder names
+        TOOL_DIR_MAP = {
+            "Feldspar Diagrams": "feldspar",
+            "QAPF Diagrams": "qapf",
+            "Raman Spectra": "raman",
+            "TAS Diagrams": "tas",
+            "Ultramafic Diagrams": "ultramafic",
+        }
 
         for tool_name, trans_key in self.TOOL_KEYS:
             tool_item = QTreeWidgetItem(self.feature_tree)
@@ -399,8 +494,137 @@ class MainWindow(QMainWindow):
                 link_label = ClickableLinkLabel("GEOWiki Page", url)
                 title_layout.addWidget(link_label, alignment=Qt.AlignmentFlag.AlignBaseline)
                 self.link_labels.append(link_label)
-                
+
             title_layout.addStretch()
+
+            # Warning Notes link (orange, aligned right in the same top HStack)
+            class WarningLinkLabel(QWidget):
+                def __init__(self, text, on_click_cb, parent=None):
+                    super().__init__(parent)
+                    self.on_click_cb = on_click_cb
+                    self.setCursor(Qt.CursorShape.PointingHandCursor)
+                    
+                    layout = QHBoxLayout(self)
+                    layout.setContentsMargins(0, 0, 0, 0)
+                    
+                    self.text_label = QLabel(text)
+                    self.text_label.setStyleSheet("color: #ff9800; font-weight: 600; text-decoration: underline;")
+                    layout.addWidget(self.text_label)
+                    
+                def enterEvent(self, event):
+                    self.text_label.setStyleSheet("color: #ffb74d; font-weight: 600; text-decoration: underline;")
+                    super().enterEvent(event)
+                    
+                def leaveEvent(self, event):
+                    self.text_label.setStyleSheet("color: #ff9800; font-weight: 600; text-decoration: underline;")
+                    super().leaveEvent(event)
+                    
+                def mousePressEvent(self, event):
+                    if event.button() == Qt.MouseButton.LeftButton:
+                        self.on_click_cb()
+                    super().mousePressEvent(event)
+
+            # Warning Overlay Popup setup
+            tool_dir_name = TOOL_DIR_MAP.get(tool_name, "")
+            overlay = WarningOverlay(tool_dir_name, content_widget)
+            overlay_layout = QVBoxLayout(overlay)
+            overlay_layout.setContentsMargins(48, 48, 48, 48)
+            
+            from PyQt6.QtWidgets import QFrame, QScrollArea
+            popup_card = QFrame()
+            popup_card.setStyleSheet(
+                "background-color: #161b22; border: 1px solid #30363d; border-radius: 12px;"
+            )
+            popup_layout = QVBoxLayout(popup_card)
+            popup_layout.setContentsMargins(40, 36, 40, 40)
+            popup_layout.setSpacing(32)
+            
+            popup_header = QHBoxLayout()
+            overlay.title_label = QLabel()
+            # Matching the app title font "IBM Plex Serif" / serif font
+            overlay.title_label.setStyleSheet("""
+                font-family: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
+                font-size: 38px;
+                font-weight: 600;
+                color: #f0f6fc;
+                border: none;
+            """)
+            popup_header.addWidget(overlay.title_label)
+            popup_header.addStretch()
+            
+            close_btn = QPushButton("✕")
+            close_btn.setFixedSize(42, 42)
+            close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            close_btn.setStyleSheet("""
+                QPushButton {
+                    background: transparent;
+                    color: #8b949e;
+                    font-size: 26px;
+                    font-weight: bold;
+                    border: none;
+                    border-radius: 21px;
+                }
+                QPushButton:hover {
+                    background-color: #21262d;
+                    color: #f0f6fc;
+                }
+            """)
+            close_btn.clicked.connect(overlay.hide)
+            popup_header.addWidget(close_btn)
+            
+            popup_layout.addLayout(popup_header)
+
+            # Scroll area for warnings content
+            scroll_area = QScrollArea()
+            scroll_area.setWidgetResizable(True)
+            scroll_area.setStyleSheet("""
+                QScrollArea {
+                    background: transparent;
+                    border: none;
+                }
+                QScrollBar:vertical {
+                    background: #161b22;
+                    width: 8px;
+                    margin: 0px;
+                    border-radius: 4px;
+                }
+                QScrollBar::handle:vertical {
+                    background: #30363d;
+                    min-height: 20px;
+                    border-radius: 4px;
+                }
+                QScrollBar::handle:vertical:hover {
+                    background: #484f58;
+                }
+                QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                    height: 0px;
+                }
+            """)
+
+            scroll_widget = QWidget()
+            scroll_widget.setStyleSheet("background: transparent; border: none;")
+            overlay.content_layout = QVBoxLayout(scroll_widget)
+            overlay.content_layout.setContentsMargins(0, 0, 12, 0)
+            overlay.content_layout.setSpacing(16)
+
+            scroll_area.setWidget(scroll_widget)
+            popup_layout.addWidget(scroll_area, stretch=1)
+            
+            overlay_layout.addWidget(popup_card)
+
+            warning_link = WarningLinkLabel(
+                tr("warning_notes"),
+                lambda o=overlay, tk=trans_key: (
+                    o.set_tool_title(tr("warning_notes_title", tool=tr(tk))),
+                    o.load_content(),
+                    o.setGeometry(o.parent().rect()),
+                    o.raise_(),
+                    o.show()
+                )
+            )
+            title_layout.addWidget(warning_link, alignment=Qt.AlignmentFlag.AlignBaseline)
+            self.warning_link_labels.append((warning_link, trans_key, overlay))
+
             content_layout.addLayout(title_layout)
             
             # Add the actual tool widget
@@ -481,6 +705,15 @@ class MainWindow(QMainWindow):
             for link_widget in self.link_labels:
                 if hasattr(link_widget, 'text_label'):
                     link_widget.text_label.setText(tr("geowiki_page"))
+
+        # Warning link labels
+        if hasattr(self, 'warning_link_labels'):
+            for link_widget, trans_key, overlay in self.warning_link_labels:
+                if hasattr(link_widget, 'text_label'):
+                    link_widget.text_label.setText(tr("warning_notes"))
+                overlay.set_tool_title(tr("warning_notes_title", tool=tr(trans_key)))
+                if overlay.isVisible():
+                    overlay.load_content()
         
         # Trigger viewport redraw for custom item delegate
         if hasattr(self, 'feature_tree'):
