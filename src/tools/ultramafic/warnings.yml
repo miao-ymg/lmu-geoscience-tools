@@ -1,0 +1,8 @@
+de: 
+  - "Nur bei M ≥ 90 %: Das Diagramm gilt nur für Gesteine mit mindestens 90 % mafischen Mineralen. Liegt M darunter, gilt QAPF bzw. das Gabbro-Diagramm."
+  - "Modalbestand, keine Chemie: Einzugeben sind die Volumenprozent von Olivin, Orthopyroxen und Klinopyroxen, auf 100 % normiert."
+  - "Nur für hornblendefreie Gesteine: Enthält das Gestein deutlich Hornblende, gilt das Diagramm Ol–Px–Hbl."
+en: 
+  - "Only for M ≥ 90%: The diagram is only valid for rocks containing at least 90% mafic minerals. If M is below this threshold, the QAPF or gabbro diagram should be used."
+  - "Modal composition, not chemistry: Input must be the volume percentages of olivine, orthopyroxene, and clinopyroxene, normalized to 100%."
+  - "Only for hornblende-free rocks: If the rock contains significant hornblende, the Ol–Px–Hbl diagram applies."

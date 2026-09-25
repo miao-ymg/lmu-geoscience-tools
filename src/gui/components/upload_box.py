@@ -145,8 +145,9 @@ class UploadBox(QWidget):
             self.instructions_layout.setContentsMargins(12, 12, 12, 12)
             
             # Header
-            header_layout = QHBoxLayout()
-            header_layout.setContentsMargins(0, 0, 0, 0)
+            self.header_layout = QHBoxLayout()
+            self.header_layout.setContentsMargins(0, 0, 0, 0)
+            self.header_layout.setSpacing(12)
             
             icon_label = QLabel("ⓘ")
             icon_label.setObjectName("InstructionsIcon")
@@ -155,10 +156,10 @@ class UploadBox(QWidget):
             self.header_label.setObjectName("InstructionsHeader")
             self.header_label.setWordWrap(True)
             
-            header_layout.addWidget(icon_label)
-            header_layout.addWidget(self.header_label, stretch=1)
+            self.header_layout.addWidget(icon_label, alignment=Qt.AlignmentFlag.AlignTop)
+            self.header_layout.addWidget(self.header_label, stretch=1)
             
-            self.instructions_layout.addLayout(header_layout)
+            self.instructions_layout.addLayout(self.header_layout)
             
             # Bullets
             for bullet in self.instructions.get("bullets", []):
@@ -178,7 +179,7 @@ class UploadBox(QWidget):
                 self.note_label.setWordWrap(True)
                 self.instructions_layout.addWidget(self.note_label)
             self.layout.addWidget(self.instructions_box)
-        
+
         # --- Bottom Generate Plot Button (Green Bar) ---
         self.generate_btn = ActionButton("Generate Plot", style_type="primary", font_size=15, font_weight=700)
         self.generate_btn.setEnabled(False)
@@ -193,6 +194,12 @@ class UploadBox(QWidget):
         from utils.i18n import i18n
         self.retranslate_ui()
         i18n.language_changed.connect(self.retranslate_ui)
+
+    def add_header_action(self, widget):
+        """Places a control at the top right of the instructions box."""
+        if not hasattr(self, "header_layout"):
+            return
+        self.header_layout.addWidget(widget, alignment=Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
 
     def _get_localized_drop_title(self):
         from utils.i18n import tr

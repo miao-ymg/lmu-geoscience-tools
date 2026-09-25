@@ -1,0 +1,16 @@
+de:
+  - "Nur Hochtemperatur: Die Feldgrenzen gelten für Feldspäte, die bei etwa 900 °C gebildet und rasch abgekühlt wurden (z. B. in Vulkaniten). Kühlt ein Feldspat langsam ab, entmischt er sich. Alkalifeldspat wird dann zu Perthit, Plagioklas zeigt die Peristerit-, Bøggild- und Huttenlocher-Lücke."
+  - "Name ≠ Chemie: Sanidin, Orthoklas und Mikroklin haben dieselbe Zusammensetzung. Um sie zu unterscheiden, braucht man Optik oder XRD, das Diagramm allein reicht nicht."
+  - "Eingabe: Einzugeben sind Molanteile Ab–An–Or aus der Strukturformel (Basis 8 O), keine Gew.-% Oxide. Die Werte werden auf 100 % normiert."
+  - "Nicht erfasst: Ba, Sr und Fe werden ignoriert. Ba-Feldspäte (Hyalophan, Celsian) erscheinen deshalb falsch."
+  - "Analysenqualität: Bei der Mikrosonde kann Na unter dem Elektronenstrahl verloren gehen. Die Punkte rutschen dann Richtung An oder Or. Vorher Kationensumme (≈ 5) und Oxidsumme prüfen."
+  - "Ein Punkt = eine Messung, nicht ein Kristall: Bei zonierten Körnern Kern und Rand getrennt plotten. Bei Perthit ergibt eine Pauschalanalyse eine Zusammensetzung, die es als einzelne Phase nicht gibt. Deshalb kennzeichnen."
+  - "Plagioklasnamen sind Konvention: Die Grenzen bei An 10/30/50/70/90 sind vereinbarte Schnitte, keine Phasengrenzen."
+en:
+  - "High-temperature only: Field boundaries apply to feldspars formed at ~900 °C and rapidly cooled (e.g., in volcanics). If a feldspar cools slowly, it unmixes. Alkali feldspar becomes perthite, and plagioclase exhibits the peristerite, Bøggild, and Huttenlocher solvus gaps."
+  - "Name ≠ Chemistry: Sanidine, orthoclase, and microcline share the same composition. Distinguishing them requires optical methods or XRD; the diagram alone is insufficient."
+  - "Input: Enter mole fractions Ab–An–Or from the structural formula (basis of 8 O), not wt.% oxides. Values are normalized to 100%."
+  - "Not recorded: Ba, Sr, and Fe are ignored. Ba feldspars (hyalophane, celsian) will therefore plot incorrectly."
+  - "Analytical quality: In electron microprobe analysis, Na can be lost under the electron beam. Data points then drift towards An or Or. Check cation sums (≈ 5) and oxide totals beforehand."
+  - "One point = one measurement, not one crystal: For zoned grains, plot core and rim separately. For perthite, bulk analysis yields a composition that does not exist as a single phase. Mark accordingly."
+  - "Plagioclase names are conventions: Boundaries at An 10/30/50/70/90 are agreed conventions, not phase boundaries."

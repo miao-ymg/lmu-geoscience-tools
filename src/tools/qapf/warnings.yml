@@ -1,0 +1,14 @@
+de:
+  - "⚠ Warnhinweise Plutonite"
+  - "Nur bei M < 90 %: Das Diagramm gilt nur, wenn das Gestein weniger als 90 Vol.-% mafische Minerale enthält. Ab 90 % gilt die Klassifikation der Ultramafitite. Einige Gesteine haben eigene Schemata: Karbonatite, Lamprophyre und Charnockite."
+  - "Modalbestand, keine Chemie: Einzugeben sind Volumenprozent der Minerale, zum Beispiel aus einer Punktzählung. Nur Q, A, P und F werden auf 100 % normiert, alle anderen Minerale fallen heraus."
+  - "⚠ Warnhinweise Vulkanite"
+  - "Nur wenn der Mineralbestand bestimmbar ist: Bei glasreicher oder sehr feinkörniger Grundmasse funktioniert QAPF nicht. Dann nimmt man die Chemie und das TAS-Diagramm oder berechnet den normativen Mineralbestand."
+  - "Manche Namen stehen nicht im Diagramm: Basalt und Andesit liegen im selben Feld. Sie werden über den SiO₂-Gehalt oder den Farbindex unterschieden. Tephrit und Basanit unterscheiden sich über den Olivingehalt (> 10 % = Basanit)."
+en:
+  - "⚠ Warning Notes Plutonic Rocks"
+  - "Only for M < 90%: The diagram is only valid if the rock contains less than 90 vol.% mafic minerals. Above 90%, the ultramafic classification applies. Certain rocks have dedicated classification schemes: carbonatites, lamprophyres, and charnockites."
+  - "Modal composition, not chemistry: Input must be volume percentage of minerals, for example from point counting. Only Q, A, P, and F are normalized to 100%; all other minerals are excluded."
+  - "⚠ Warning Notes Volcanic Rocks"
+  - "Only if mineralogy is determinable: QAPF cannot be used for glass-rich or fine-grained groundmass. In such cases, use whole-rock chemistry with the TAS diagram or calculate normative mineralogy."
+  - "Some rock names are not in the diagram: Basalt and andesite fall into the same field. They are distinguished by SiO₂ content or color index. Tephrite and basanite are distinguished by olivine content (> 10% = basanite)."

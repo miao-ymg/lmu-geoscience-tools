@@ -45,9 +45,10 @@ class StartupWorker(QThread):
             print(f"Error during background startup: {e}")
 
 class LazyWidget(QWidget):
-    def __init__(self, loader_fn):
+    def __init__(self, loader_fn, on_loaded=None):
         super().__init__()
         self.loader_fn = loader_fn
+        self.on_loaded = on_loaded
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.widget = None
@@ -56,6 +57,8 @@ class LazyWidget(QWidget):
         if self.widget is None:
             self.widget = self.loader_fn()
             self.layout.addWidget(self.widget)
+            if self.on_loaded:
+                self.on_loaded(self.widget)
         return self.widget
 
 class MainWindow(QMainWindow):
@@ -273,6 +276,155 @@ class MainWindow(QMainWindow):
         self.tool_items = []
         self.feature_title_labels = []
         self.link_labels = []
+        self.warning_link_labels = []
+
+        # Create overlay popup layer for warning notes
+        class WarningOverlay(QWidget):
+            def __init__(self, tool_dir_name, parent=None):
+                super().__init__(parent)
+                self.tool_dir_name = tool_dir_name
+                self._fade = 0.0
+                self._card_effect = None
+                self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+                self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
+                self.setAutoFillBackground(False)
+                self._fade_anim = QVariantAnimation(self)
+                self._fade_anim.setDuration(220)
+                self._fade_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+                self._fade_anim.valueChanged.connect(self._apply_fade)
+                self._fade_anim.finished.connect(self._on_fade_finished)
+                self.hide()
+
+            def set_tool_title(self, title_text):
+                self.title_label.setText(title_text)
+
+            def _apply_fade(self, value):
+                self._fade = float(value)
+                if self._card_effect is not None:
+                    self._card_effect.setOpacity(self._fade)
+                self.update()
+
+            def _on_fade_finished(self):
+                if self._fade <= 0.001:
+                    QWidget.hide(self)
+
+            def fade_in(self):
+                if not self.isVisible():
+                    self._fade = 0.0
+                    if self._card_effect is not None:
+                        self._card_effect.setOpacity(0.0)
+                if self.parent():
+                    self.setGeometry(self.parent().rect())
+                self.raise_()
+                self.show()
+                self._fade_anim.stop()
+                self._fade_anim.setStartValue(self._fade)
+                self._fade_anim.setEndValue(1.0)
+                self._fade_anim.start()
+
+            def fade_out(self):
+                if not self.isVisible():
+                    return
+                self._fade_anim.stop()
+                self._fade_anim.setStartValue(self._fade)
+                self._fade_anim.setEndValue(0.0)
+                self._fade_anim.start()
+
+            def load_content(self):
+                # Drop previous labels immediately. deleteLater() leaves them
+                # visible, so a language switch kept showing the old text.
+                scroll = self.content_layout.parentWidget()
+                while self.content_layout.count():
+                    item = self.content_layout.takeAt(0)
+                    w = item.widget()
+                    if w is not None:
+                        w.hide()
+                        w.setParent(None)
+                        w.deleteLater()
+                if scroll is not None:
+                    for child in scroll.findChildren(QLabel, options=Qt.FindChildOption.FindDirectChildrenOnly):
+                        child.hide()
+                        child.setParent(None)
+                        child.deleteLater()
+
+                import yaml
+                from utils.i18n import i18n
+                lang = i18n.get_language()
+
+                # Get path to warnings.yml
+                if getattr(sys, 'frozen', False):
+                    yml_path = os.path.join(sys._MEIPASS, 'tools', self.tool_dir_name, 'warnings.yml')
+                else:
+                    yml_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tools', self.tool_dir_name, 'warnings.yml')
+
+                bullets = []
+                if os.path.exists(yml_path):
+                    try:
+                        with open(yml_path, 'r', encoding='utf-8') as f:
+                            data = yaml.safe_load(f)
+                            if isinstance(data, dict):
+                                bullets = data.get(lang)
+                                if not bullets:
+                                    # Fallback if preferred language is empty/missing
+                                    fallback_lang = 'de' if lang == 'en' else 'en'
+                                    bullets = data.get(fallback_lang, []) or []
+                    except Exception as e:
+                        print(f"Error loading warnings.yml for {self.tool_dir_name}: {e}")
+
+                if bullets:
+                    for item in bullets:
+                        # Check if item is a section header (e.g. starting with ⚠ or bold category)
+                        is_header = item.startswith("⚠") or item.endswith(":")
+                        lbl = QLabel(item if is_header else f"• {item}")
+                        lbl.setTextFormat(Qt.TextFormat.PlainText)
+                        lbl.setWordWrap(True)
+                        if is_header:
+                            lbl.setStyleSheet("""
+                                font-size: 21px;
+                                font-weight: bold;
+                                color: #ffb74d;
+                                margin-top: 16px;
+                                margin-bottom: 6px;
+                                border: none;
+                            """)
+                        else:
+                            lbl.setStyleSheet("""
+                                font-size: 19px;
+                                color: #c9d1d9;
+                                line-height: 165%;
+                                margin-bottom: 12px;
+                                border: none;
+                            """)
+                        self.content_layout.addWidget(lbl)
+                else:
+                    empty_lbl = QLabel()
+                    empty_lbl.setStyleSheet("font-size: 19px; color: #8b949e; italic; border: none;")
+                    self.content_layout.addWidget(empty_lbl)
+
+                self.content_layout.addStretch()
+                self._warnings_loaded = True
+
+            def resizeEvent(self, event):
+                if self.parent():
+                    self.setGeometry(self.parent().rect())
+                super().resizeEvent(event)
+
+            def paintEvent(self, event):
+                from PyQt6.QtGui import QPainter, QColor
+                painter = QPainter(self)
+                # Dimmed overlay background over the right view area
+                alpha = int(round(160 * self._fade))
+                painter.fillRect(self.rect(), QColor(0, 0, 0, alpha))
+                painter.end()
+
+        # Mapping tool names to folder names
+        TOOL_DIR_MAP = {
+            "Feldspar Diagrams": "feldspar",
+            "QAPF Diagrams": "qapf",
+            "Raman Spectra": "raman",
+            "TAS Diagrams": "tas",
+            "Ultramafic Diagrams": "ultramafic",
+        }
 
         for tool_name, trans_key in self.TOOL_KEYS:
             tool_item = QTreeWidgetItem(self.feature_tree)
@@ -399,8 +551,146 @@ class MainWindow(QMainWindow):
                 link_label = ClickableLinkLabel("GEOWiki Page", url)
                 title_layout.addWidget(link_label, alignment=Qt.AlignmentFlag.AlignBaseline)
                 self.link_labels.append(link_label)
-                
+
             title_layout.addStretch()
+
+            # Warning Notes link, placed in the instructions box header
+            class WarningLinkLabel(QWidget):
+                def __init__(self, text, on_click_cb, parent=None):
+                    super().__init__(parent)
+                    self.on_click_cb = on_click_cb
+                    self.setCursor(Qt.CursorShape.PointingHandCursor)
+                    
+                    self.setStyleSheet("background: transparent;")
+                    layout = QHBoxLayout(self)
+                    layout.setContentsMargins(0, 0, 0, 0)
+                    
+                    self.text_label = QLabel(text)
+                    self.text_label.setStyleSheet("color: #ff9800; font-weight: 600; font-size: 14px; text-decoration: underline; background: transparent;")
+                    layout.addWidget(self.text_label)
+                    
+                def enterEvent(self, event):
+                    self.text_label.setStyleSheet("color: #ffb74d; font-weight: 600; font-size: 14px; text-decoration: underline; background: transparent;")
+                    super().enterEvent(event)
+                    
+                def leaveEvent(self, event):
+                    self.text_label.setStyleSheet("color: #ff9800; font-weight: 600; font-size: 14px; text-decoration: underline; background: transparent;")
+                    super().leaveEvent(event)
+                    
+                def mousePressEvent(self, event):
+                    if event.button() == Qt.MouseButton.LeftButton:
+                        self.on_click_cb()
+                    super().mousePressEvent(event)
+
+            # Warning Overlay Popup setup
+            tool_dir_name = TOOL_DIR_MAP.get(tool_name, "")
+            overlay = WarningOverlay(tool_dir_name, content_widget)
+            overlay_layout = QVBoxLayout(overlay)
+            overlay_layout.setContentsMargins(48, 48, 48, 48)
+            
+            from PyQt6.QtWidgets import QFrame, QScrollArea
+            popup_card = QFrame()
+            popup_card.setStyleSheet(
+                "background-color: #161b22; border: 1px solid #30363d; border-radius: 12px;"
+            )
+            popup_layout = QVBoxLayout(popup_card)
+            popup_layout.setContentsMargins(40, 36, 40, 40)
+            popup_layout.setSpacing(32)
+            
+            popup_header = QHBoxLayout()
+            overlay.title_label = QLabel()
+            # Matching the app title font "IBM Plex Serif" / serif font
+            overlay.title_label.setStyleSheet("""
+                font-family: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
+                font-size: 38px;
+                font-weight: 600;
+                color: #f0f6fc;
+                border: none;
+            """)
+            popup_header.addWidget(overlay.title_label)
+            popup_header.addStretch()
+            
+            close_btn = QPushButton("✕")
+            close_btn.setFixedSize(42, 42)
+            close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            close_btn.setStyleSheet("""
+                QPushButton {
+                    background: transparent;
+                    color: #8b949e;
+                    font-size: 26px;
+                    font-weight: bold;
+                    border: none;
+                    border-radius: 21px;
+                }
+                QPushButton:hover {
+                    background-color: #21262d;
+                    color: #f0f6fc;
+                }
+            """)
+            close_btn.clicked.connect(overlay.fade_out)
+            popup_header.addWidget(close_btn)
+            
+            popup_layout.addLayout(popup_header)
+
+            # Scroll area for warnings content
+            scroll_area = QScrollArea()
+            scroll_area.setWidgetResizable(True)
+            scroll_area.setStyleSheet("""
+                QScrollArea {
+                    background: transparent;
+                    border: none;
+                }
+                QScrollBar:vertical {
+                    background: #161b22;
+                    width: 8px;
+                    margin: 0px;
+                    border-radius: 4px;
+                }
+                QScrollBar::handle:vertical {
+                    background: #30363d;
+                    min-height: 20px;
+                    border-radius: 4px;
+                }
+                QScrollBar::handle:vertical:hover {
+                    background: #484f58;
+                }
+                QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                    height: 0px;
+                }
+            """)
+
+            scroll_widget = QWidget()
+            scroll_widget.setStyleSheet("background: transparent; border: none;")
+            overlay.content_layout = QVBoxLayout(scroll_widget)
+            overlay.content_layout.setContentsMargins(0, 0, 12, 0)
+            overlay.content_layout.setSpacing(16)
+
+            scroll_area.setWidget(scroll_widget)
+            popup_layout.addWidget(scroll_area, stretch=1)
+            
+            overlay_layout.addWidget(popup_card)
+
+            from PyQt6.QtWidgets import QGraphicsOpacityEffect
+            overlay._card_effect = QGraphicsOpacityEffect(popup_card)
+            overlay._card_effect.setOpacity(0.0)
+            popup_card.setGraphicsEffect(overlay._card_effect)
+
+            warning_link = WarningLinkLabel(
+                tr("warning_notes"),
+                lambda o=overlay, tk=trans_key: (
+                    o.set_tool_title(tr("warning_notes_title", tool=tr(tk))),
+                    o.load_content(),
+                    o.fade_in()
+                )
+            )
+            self.warning_link_labels.append((warning_link, trans_key, overlay))
+
+            def _place_warning(root, link=warning_link):
+                from gui.components.upload_box import UploadBox
+                boxes = root.findChildren(UploadBox)
+                if boxes:
+                    boxes[0].add_header_action(link)
+
             content_layout.addLayout(title_layout)
             
             # Add the actual tool widget
@@ -408,31 +698,31 @@ class MainWindow(QMainWindow):
                 def get_qapf():
                     from tools.qapf.widget import QapfWidget
                     return QapfWidget()
-                tool_widget = LazyWidget(get_qapf)
+                tool_widget = LazyWidget(get_qapf, _place_warning)
                 content_layout.addWidget(tool_widget, stretch=1)
             elif tool_name == "TAS Diagrams":
                 def get_tas():
                     from tools.tas.widget import TasWidget
                     return TasWidget()
-                tool_widget = LazyWidget(get_tas)
+                tool_widget = LazyWidget(get_tas, _place_warning)
                 content_layout.addWidget(tool_widget, stretch=1)
             elif tool_name == "Feldspar Diagrams":
                 def get_feldspar():
                     from tools.feldspar.widget import FeldsparWidget
                     return FeldsparWidget()
-                tool_widget = LazyWidget(get_feldspar)
+                tool_widget = LazyWidget(get_feldspar, _place_warning)
                 content_layout.addWidget(tool_widget, stretch=1)
             elif tool_name == "Ultramafic Diagrams":
                 def get_ultramafic():
                     from tools.ultramafic.widget import UltramaficWidget
                     return UltramaficWidget()
-                tool_widget = LazyWidget(get_ultramafic)
+                tool_widget = LazyWidget(get_ultramafic, _place_warning)
                 content_layout.addWidget(tool_widget, stretch=1)
             elif tool_name == "Raman Spectra":
                 def get_raman():
                     from tools.raman.widget import RamanWidget
                     return RamanWidget()
-                tool_widget = LazyWidget(get_raman)
+                tool_widget = LazyWidget(get_raman, _place_warning)
                 content_layout.addWidget(tool_widget, stretch=1)
             else:
                 # Add stretch to push content to top for unfinished tools
@@ -481,6 +771,15 @@ class MainWindow(QMainWindow):
             for link_widget in self.link_labels:
                 if hasattr(link_widget, 'text_label'):
                     link_widget.text_label.setText(tr("geowiki_page"))
+
+        # Warning link labels
+        if hasattr(self, 'warning_link_labels'):
+            for link_widget, trans_key, overlay in self.warning_link_labels:
+                if hasattr(link_widget, 'text_label'):
+                    link_widget.text_label.setText(tr("warning_notes"))
+                overlay.set_tool_title(tr("warning_notes_title", tool=tr(trans_key)))
+                if overlay.isVisible() or getattr(overlay, "_warnings_loaded", False):
+                    overlay.load_content()
         
         # Trigger viewport redraw for custom item delegate
         if hasattr(self, 'feature_tree'):

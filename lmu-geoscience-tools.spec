@@ -15,6 +15,8 @@ a = Analysis(
         ('src/tools/qapf/*.yml', 'tools/qapf'),
         ('src/tools/feldspar/*.yml', 'tools/feldspar'),
         ('src/tools/ultramafic/*.yml', 'tools/ultramafic'),
+        ('src/tools/tas/*.yml', 'tools/tas'),
+        ('src/tools/raman/*.yml', 'tools/raman'),
     ] + pyrolite_datas,
     hiddenimports=['pyrolite', 'pyrolite.plot', 'pyrolite.plot.templates', 'PyQt6.QtSvg', 'matplotlib.backends.backend_svg', 'matplotlib.backends.backend_pdf'],
     hookspath=[],

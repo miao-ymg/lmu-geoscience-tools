@@ -9,6 +9,8 @@
     "tool_ultramafic": "Ultramafit-Diagramme",
     "tool_raman": "Raman-Spektren",
     "geowiki_page": "GEOWiki-Webseite",
+    "warning_notes": "Warnhinweise",
+    "warning_notes_title": "Warnhinweise: {tool}",
     "home_welcome": "Willkommen bei GeoPlottr",
     "home_description": "Wähle einen Tool von der linken Seite aus. Diese Tools vereinfachen die Gesteinsklassifikation,<br>das mineralchemische Plotten und Spektralanalysen für petrologische Praktika und Forschung.",
     "home_image_credit": "Bild von magnific",

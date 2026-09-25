@@ -1,0 +1,4 @@
+de:
+  - "Nur Rohdaten, nur zum Überblick: Es gibt keine Untergrundkorrektur, keine Glättung und keinen Peak-Fit. Intensitäten und Peakhöhen sind deshalb nicht quantitativ auswertbar. Ein breiter, ansteigender Untergrund ist meist Fluoreszenz und keine Probeninformation."
+en:
+  - "Raw data only, for overview purposes only: There is no background correction, no smoothing, and no peak fitting. Intensities and peak heights are therefore not quantitatively evaluable. A broad, rising background is usually fluorescence and not sample information."

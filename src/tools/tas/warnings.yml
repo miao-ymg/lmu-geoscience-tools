@@ -1,0 +1,8 @@
+de:
+  - "Nur zum schnellen Überblick: Die Feldgrenzen folgen Middlemost (1994). Für eine genaue Klassifikation gelten als Standard Le Bas et al. (1986) und Le Maitre et al. (2002)."
+  - "Daten vorher aufbereiten: Den LOI abziehen und erst danach wasser- und CO₂-frei auf 100 % normieren. Rohdaten ohne diese Aufbereitung führen zu falschen Namen."
+  - "Nur frische Gesteine: Bei Alteration werden Na und K mobil. Das Diagramm sollte nicht verwendet werden, wenn H₂O⁺ > 2 % oder CO₂ > 0,5 % ist (Le Maitre et al., 2002)."
+en:
+  - "Quick overview only: Field boundaries follow Middlemost (1994). Standard references for precise classification are Le Bas et al. (1986) and Le Maitre et al. (2002)."
+  - "Prepare data first: Subtract LOI and normalize volatile-free (water- and CO₂-free) to 100%. Raw data without this recalculation result in incorrect rock names."
+  - "Fresh rocks only: Alteration mobilizes Na and K. The diagram should not be used if H₂O⁺ > 2% or CO₂ > 0.5% (Le Maitre et al., 2002)."
