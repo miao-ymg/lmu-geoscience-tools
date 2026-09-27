@@ -15,7 +15,7 @@ class I18nManager(QObject):
 
     def __init__(self):
         super().__init__()
-        self.settings = QSettings("LMU", "GeoscienceTools")
+        self.settings = QSettings("GEOPlottr", "GEOPlottr")
         self.current_lang = self.settings.value("language", "en")
         self.translations = {}
         self.load_translations()

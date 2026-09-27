@@ -18,11 +18,11 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         include:
           - os: ubuntu-latest
-            release_name: lmu-geoscience-tools-linux.zip
+            release_name: geoplottr-linux.zip
           - os: macos-latest
-            release_name: lmu-geoscience-tools-macos.zip
+            release_name: geoplottr-macos.zip
           - os: windows-latest
-            release_name: lmu-geoscience-tools-windows.zip
+            release_name: geoplottr-windows.zip
 
     steps:
       - uses: actions/checkout@v4
@@ -64,11 +64,11 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: |
           PY="/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11"
-          arch -x86_64 "$PY" -m PyInstaller lmu-geoscience-tools.spec
+          arch -x86_64 "$PY" -m PyInstaller geoplottr.spec
 
       - name: Build with PyInstaller (Linux/Windows)
         if: matrix.os != 'macos-latest'
-        run: pyinstaller lmu-geoscience-tools.spec
+        run: pyinstaller geoplottr.spec
 
       # ── Linux: zip the onedir ──────────────────────────────────────────
       - name: Prepare binary (Linux)
@@ -76,7 +76,7 @@ jobs:
         shell: bash
         run: |
           cd dist
-          zip -ry "../${{ matrix.release_name }}" lmu-geoscience-tools/
+          zip -ry "../${{ matrix.release_name }}" geoplottr/
           cd ..
           mv "${{ matrix.release_name }}" "dist/${{ matrix.release_name }}"
 
@@ -86,7 +86,7 @@ jobs:
         shell: bash
         run: |
           cd dist
-          zip -ry "../${{ matrix.release_name }}" "GeoPlottr.app"
+          zip -ry "../${{ matrix.release_name }}" "GEOPlottr.app"
           cd ..
           mv "${{ matrix.release_name }}" "dist/${{ matrix.release_name }}"
 
@@ -95,7 +95,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
-          Compress-Archive -Path dist\lmu-geoscience-tools -DestinationPath dist\${{ matrix.release_name }}
+          Compress-Archive -Path dist\geoplottr -DestinationPath dist\${{ matrix.release_name }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -119,8 +119,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            artifacts/lmu-geoscience-tools-linux.zip/lmu-geoscience-tools-linux.zip
-            artifacts/lmu-geoscience-tools-macos.zip/lmu-geoscience-tools-macos.zip
-            artifacts/lmu-geoscience-tools-windows.zip/lmu-geoscience-tools-windows.zip
+            artifacts/geoplottr-linux.zip/geoplottr-linux.zip
+            artifacts/geoplottr-macos.zip/geoplottr-macos.zip
+            artifacts/geoplottr-windows.zip/geoplottr-windows.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

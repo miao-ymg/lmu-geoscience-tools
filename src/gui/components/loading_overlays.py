@@ -140,7 +140,7 @@ class StartupOverlay(QWidget):
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        title = QLabel("GeoPlottr")
+        title = QLabel("GEOPlottr")
         title.setObjectName("LoadingStartupTitle")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         

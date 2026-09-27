@@ -1,5 +1,5 @@
 {
-    "app_title": "GeoPlottr",
+    "app_title": "GEOPlottr",
     "app_subtitle": "LEHRSTUHL FÜR GEOLOGIE",
     "section_toolset": "GEOWISSENSCHAFTLICHE TOOLS",
     "home_portal": "Startseite",
@@ -11,7 +11,7 @@
     "geowiki_page": "GEOWiki-Webseite",
     "warning_notes": "Warnhinweise",
     "warning_notes_title": "Warnhinweise: {tool}",
-    "home_welcome": "Willkommen bei GeoPlottr",
+    "home_welcome": "Willkommen bei GEOPlottr",
     "home_description": "Wähle einen Tool von der linken Seite aus. Diese Tools vereinfachen die Gesteinsklassifikation,<br>das mineralchemische Plotten und Spektralanalysen für petrologische Praktika und Forschung.",
     "home_image_credit": "Bild von magnific",
     "upload_drop_title": "Ziehe deine {file_type}-Datei hierher",

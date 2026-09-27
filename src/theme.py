@@ -1,5 +1,5 @@
 """
-Centralized color palette for the GeoPlottr.
+Centralized color palette for the GEOPlottr.
 All hex codes must use lowercase letters.
 """
 
