@@ -42,10 +42,10 @@ class PlotView(BasePlotView):
         
         self.classification_toggle = ToggleGroup(
             "Classification:", 
-            ['None', '900° C'], 
-            '900° C',
+            ['None', '≈ 900 °C'], 
+            '≈ 900 °C',
             label_key="toggle_classification",
-            option_keys={'None': 'option_none', '900° C': 'option_900c'}
+            option_keys={'None': 'option_none', '≈ 900 °C': 'option_900c'}
         )
         self.classification_toggle.selectionChanged.connect(on_classification_changed)
         
@@ -68,7 +68,7 @@ class FeldsparWidget(QWidget):
         from utils.instructions import get_instructions_data
         instructions = get_instructions_data(instructions_path)
         self.upload_view = UploadBox(self.on_file_selected, self.on_generate_clicked, instructions=instructions)
-        self.current_classification = '900° C'
+        self.current_classification = '≈ 900 °C'
         self.plot_view = PlotView(self.show_upload, self.download_plot, self.on_classification_changed)
         self.loading_overlay = PanelOverlay()
 

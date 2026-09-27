@@ -41,7 +41,7 @@ def _ternary_coords(ab, or_, an):
     return x, y
 
 
-def plot_feldspar(endmembers_df=None, dark_mode=True, classification='900° C'):
+def plot_feldspar(endmembers_df=None, dark_mode=True, classification='≈ 900 °C'):
     import numpy as np
     
     # Configure colors based on mode
@@ -65,7 +65,7 @@ def plot_feldspar(endmembers_df=None, dark_mode=True, classification='900° C'):
     # Read classifications
     all_classifications = get_classifications()
     class_dict = {}
-    if classification == '900° C':
+    if classification == '≈ 900 °C':
         class_dict = all_classifications.get('Default', {})
 
     # Increase width to make room for legend

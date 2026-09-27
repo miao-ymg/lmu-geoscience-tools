@@ -50,9 +50,15 @@ class PlotView(BasePlotView):
         self.paper_label = QLabel()
         self.paper_label.setOpenExternalLinks(True)
         self.paper_label.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.paper_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom)
+        from PyQt6.QtWidgets import QSizePolicy
+        self.paper_label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         self._update_paper_label()
         
-        self.add_top_widget(self.paper_label)
+        self.top_layout.addWidget(
+            self.paper_label,
+            alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom,
+        )
         self.download_btn.clicked.connect(on_download)
         
         from utils.i18n import i18n
