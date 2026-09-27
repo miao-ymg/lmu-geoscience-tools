@@ -79,9 +79,12 @@ Plutonites:
   "Alkali Feldspar Granite":
     Q: [20, 60]
     P_ratio: [0, 10]
-  "Granite":
+  "Syenogranite":
     Q: [20, 60]
-    P_ratio: [10, 65]
+    P_ratio: [10, 35]
+  "Monzogranite":
+    Q: [20, 60]
+    P_ratio: [35, 65]
   "Granodiorite":
     Q: [20, 60]
     P_ratio: [65, 90]
