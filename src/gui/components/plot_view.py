@@ -101,27 +101,83 @@ class BasePlotView(QWidget):
             self.canvas_container.removeWidget(old_canvas)
             old_canvas.deleteLater()
         
+    def _choose_download_style(self, parent_widget):
+        """Asks whether to export the light figure or the on-screen plot."""
+        from PyQt6.QtWidgets import QDialog, QVBoxLayout, QRadioButton, QButtonGroup, QHBoxLayout
+        from utils.i18n import tr
+
+        dialog = QDialog(parent_widget)
+        dialog.setWindowTitle(tr("dialog_save_plot"))
+        dialog.setModal(True)
+        dialog.setStyleSheet("""
+            QDialog { background-color: #161b22; }
+            QLabel { color: #f0f3f6; font-size: 15px; background: transparent; }
+            QRadioButton { color: #f0f3f6; font-size: 14px; spacing: 8px; background: transparent; }
+            QRadioButton::indicator { width: 16px; height: 16px; }
+        """)
+
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(24, 22, 24, 20)
+        layout.setSpacing(14)
+
+        prompt = QLabel(tr("download_style_prompt"))
+        prompt.setWordWrap(True)
+        layout.addWidget(prompt)
+
+        light_option = QRadioButton(tr("download_style_light"))
+        transparent_option = QRadioButton(tr("download_style_transparent"))
+        light_option.setChecked(True)
+        group = QButtonGroup(dialog)
+        group.addButton(light_option)
+        group.addButton(transparent_option)
+        layout.addWidget(light_option)
+        layout.addWidget(transparent_option)
+
+        buttons = QHBoxLayout()
+        buttons.setSpacing(10)
+        buttons.addStretch()
+        cancel_btn = ActionButton(tr("download_style_cancel"), style_type="secondary")
+        continue_btn = ActionButton(tr("download_style_continue"), style_type="primary")
+        cancel_btn.clicked.connect(dialog.reject)
+        continue_btn.clicked.connect(dialog.accept)
+        buttons.addWidget(cancel_btn)
+        buttons.addWidget(continue_btn)
+        layout.addLayout(buttons)
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return None
+        return "transparent" if transparent_option.isChecked() else "light"
+
     def handle_download(self, parent_widget, generate_light_fig_func, default_filename):
         """
         Standardized download handler.
         generate_light_fig_func should take no arguments and return a Figure styled for light mode.
+        The transparent export saves the figure currently shown in the GUI.
         """
         if not self.current_fig:
             return
-            
+
         from utils.i18n import tr
+        style = self._choose_download_style(parent_widget)
+        if style is None:
+            return
+
         file_path, _ = QFileDialog.getSaveFileName(
             parent_widget,
             tr("dialog_save_plot"),
             os.path.expanduser(f"~/Desktop/{default_filename}"),
             "PNG Images (*.png);;PDF Documents (*.pdf);;SVG Graphics (*.svg)"
         )
-        
+
         if file_path:
             try:
-                # Generate a clean, light-mode figure specifically for export
-                fig = generate_light_fig_func()
-                fig.savefig(file_path, dpi=300, bbox_inches='tight')
+                if style == "transparent":
+                    self.current_fig.savefig(
+                        file_path, dpi=300, bbox_inches='tight', transparent=True
+                    )
+                else:
+                    fig = generate_light_fig_func()
+                    fig.savefig(file_path, dpi=300, bbox_inches='tight')
                 QMessageBox.information(parent_widget, tr("dialog_success"), tr("dialog_saved_to", path=file_path))
             except Exception as e:
                 QMessageBox.critical(parent_widget, tr("dialog_error"), tr("dialog_save_failed", error=str(e)))

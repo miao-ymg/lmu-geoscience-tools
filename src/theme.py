@@ -78,7 +78,7 @@ COLORS = {
     "@plot-accent-light": "#40a02b",
     
     # Special Plot Backgrounds
-    "@plot-feldspar-bg-dark": "#161b22",
+    "@plot-feldspar-bg-dark": "none",
     "@plot-feldspar-bg-light": "white",
     
     # Python-specific animations for buttons

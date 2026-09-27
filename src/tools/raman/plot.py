@@ -164,7 +164,7 @@ def plot_raman(dfs_dict, dark_mode=False, selected_x=None):
     # Text annotation displaying the Raman shift x-value cleanly below the selected point
     val_text = ax.annotate("", xy=(0, 0), xytext=(0, -18), textcoords="offset points",
                            color=text_color, fontsize=9, fontweight='bold', ha='center', va='top', 
-                           bbox=dict(boxstyle='round,pad=0.25', facecolor=bg_color if bg_color != 'none' else '#161b22', edgecolor=line_color, alpha=0.9),
+                           bbox=dict(boxstyle='round,pad=0.25', facecolor=bg_color, edgecolor=line_color, alpha=0.9),
                            visible=False, animated=True, zorder=10, clip_on=False)
     ax.val_text = val_text
 

@@ -196,6 +196,8 @@ def plot_feldspar(endmembers_df=None, dark_mode=True, classification='900° C'):
             
     # Track drawn labels to avoid duplicate legend entries/text
     drawn_labels = set()
+    class_patches = []
+    gap_coords = None
     from utils.i18n import tr
     feldspar_trans_map = {
         "Miscibility Gap": "feldspar_miscibility_gap",
@@ -218,10 +220,14 @@ def plot_feldspar(endmembers_df=None, dark_mode=True, classification='900° C'):
             poly_coords = [_ternary_coords(ab, or_, an) for ab, or_, an in ternary_pts]
             
             if class_name == "Miscibility Gap":
+                # In dark mode this matches the clear figure background. The
+                # field is drawn on top of overlapping classes, so those
+                # classes are clipped out of the gap below.
                 color = bg_color
-                z = 3  # Draw over other regions
+                z = 3
                 alpha = 1.0
                 edge_col = line_color
+                gap_coords = poly_coords
             else:
                 color = name_colors[class_name]
                 z = 1
@@ -231,7 +237,9 @@ def plot_feldspar(endmembers_df=None, dark_mode=True, classification='900° C'):
             p = plt.Polygon(poly_coords, closed=True, fill=True, facecolor=color, 
                             edgecolor=edge_col, linewidth=1.0, alpha=alpha, zorder=z)
             ax.add_patch(p)
-            
+            if class_name != "Miscibility Gap":
+                class_patches.append(p)
+
             if class_name != "Miscibility Gap" and class_name not in drawn_labels:
                 # Add to legend
                 patch = mpatches.Patch(color=color, alpha=0.4, label=display_name)
@@ -250,6 +258,32 @@ def plot_feldspar(endmembers_df=None, dark_mode=True, classification='900° C'):
                     center_y = sum(c[1] for c in poly_coords) / len(poly_coords)
                 
                 ax.text(center_x, center_y, display_name, color=text_color, fontsize=7, ha='center', va='center', zorder=5)
+
+    # The miscibility gap used to be filled with the dark window color so it
+    # would cover fields drawn underneath. With a clear background, clip those
+    # fields out of the gap instead of painting over them.
+    if gap_coords and bg_color == "none" and class_patches:
+        from matplotlib.path import Path
+        from matplotlib.patches import PathPatch
+        rect = [(-1.0, -1.0), (2.0, -1.0), (2.0, 2.0), (-1.0, 2.0)]
+        hole = list(reversed(gap_coords))
+        verts = [rect[0]]
+        codes = [Path.MOVETO]
+        verts.extend(rect[1:])
+        codes.extend([Path.LINETO] * (len(rect) - 1))
+        verts.append((0.0, 0.0))
+        codes.append(Path.CLOSEPOLY)
+        verts.append(hole[0])
+        codes.append(Path.MOVETO)
+        verts.extend(hole[1:])
+        codes.extend([Path.LINETO] * (len(hole) - 1))
+        verts.append((0.0, 0.0))
+        codes.append(Path.CLOSEPOLY)
+        clip = PathPatch(Path(verts, codes), transform=ax.transData, fill=False, linewidth=0)
+        clip.set_visible(False)
+        ax.add_patch(clip)
+        for patch in class_patches:
+            patch.set_clip_path(clip)
 
     sqrt3_2 = np.sqrt(3) / 2
     # Edge texts
