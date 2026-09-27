@@ -1,5 +1,5 @@
 TOOL_URLS = {
-    "Feldspar Diagrams": "https://geowiki.geo.lmu.de/wiki/Feldspat",
+    "Feldspar Diagrams": "https://geowiki.geo.lmu.de/wiki/Feldspat-Gruppe",
     "QAPF Diagrams": "https://geowiki.geo.lmu.de/wiki/QAPF",
     "Raman Spectra": "https://geowiki.geo.lmu.de/wiki/Ramanspektroskopie",
     "TAS Diagrams": "https://geowiki.geo.lmu.de/wiki/TAS-Diagramm",
